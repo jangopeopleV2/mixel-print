@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build, sign and (optionally) notarize the macOS release artifacts:
 #
-#   $DIST/pdfcraft-<version>-macos-<arch>.dmg          PdfCraft.app on a drag-to-Applications DMG
+#   $DIST/pdfcraft-<version>-macos-<arch>.dmg          MIXEL Print.app on a drag-to-Applications DMG
 #   $DIST/pdfcraft-cli-<version>-macos-<arch>.zip      the headless CLI
 #
 # Usage: packaging/macos/package.sh [--arch universal|aarch64|x86_64] [--skip-build]
@@ -39,9 +39,9 @@ export MACOSX_DEPLOYMENT_TARGET=11.0
 IDENTITY="${MACOS_SIGN_IDENTITY:--}"
 SHORT_VERSION="${VERSION%%-*}"
 WORK="$CARGO_TARGET_DIR/macos-package"
-APP="$WORK/PdfCraft.app"
-DMG="$DIST/pdfcraft-$VERSION-macos-$ARCH.dmg"
-CLI_ZIP="$DIST/pdfcraft-cli-$VERSION-macos-$ARCH.zip"
+APP="$WORK/MIXEL Print.app"
+DMG="$DIST/mixel-print-$VERSION-macos-$ARCH.dmg"
+CLI_ZIP="$DIST/mixel-print-cli-$VERSION-macos-$ARCH.zip"
 
 NOTARIZE=0
 if [ "$IDENTITY" = "-" ]; then
@@ -52,7 +52,7 @@ else
   warn "macOS: APPLE_ID / APPLE_PASSWORD / APPLE_TEAM_ID incomplete; signed but not notarized"
 fi
 
-echo "==> PdfCraft $VERSION for macOS ($ARCH), identity: $IDENTITY, notarize: $NOTARIZE"
+echo "==> MIXEL Print $VERSION for macOS ($ARCH), identity: $IDENTITY, notarize: $NOTARIZE"
 
 # ---- build -------------------------------------------------------------------------------------
 if [ "$SKIP_BUILD" = 0 ]; then
@@ -97,12 +97,12 @@ notarize() {
   fi
 }
 
-# ---- PdfCraft.app ----------------------------------------------------------------------------
+# ---- MIXEL Print.app ----------------------------------------------------------------------------
 echo "==> assembling $APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 # Executable and icon carry the display name (CFBundleExecutable / CFBundleIconFile).
-cp "$WORK/bin/pdfcraft" "$APP/Contents/MacOS/PdfCraft"
-cp "$ROOT/assets/app-icon/pdfcraft.icns" "$APP/Contents/Resources/PdfCraft.icns"
+cp "$WORK/bin/pdfcraft" "$APP/Contents/MacOS/MIXEL Print"
+cp "$ROOT/assets/app-icon/pdfcraft.icns" "$APP/Contents/Resources/MIXEL Print.icns"
 copy_font_licences "$APP/Contents/Resources"
 # OCR models: the app finds them at Contents/MacOS/../Resources/models. Before signing, so the
 # bundle's seal covers them.
@@ -115,13 +115,13 @@ printf 'APPL????' >"$APP/Contents/PkgInfo"
 
 # Sign inside-out: nested code first, then the bundle itself (no --deep on the final signature).
 # Today the only nested code is the main executable; frameworks/helpers would be signed here too.
-sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP/Contents/MacOS/PdfCraft"
+sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP/Contents/MacOS/MIXEL Print"
 sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP"
 codesign --verify --strict --deep --verbose=2 "$APP"
 
 if [ "$NOTARIZE" = 1 ]; then
-  ditto -c -k --keepParent "$APP" "$WORK/PdfCraft-notarize.zip"
-  notarize "$WORK/PdfCraft-notarize.zip"
+  ditto -c -k --keepParent "$APP" "$WORK/MIXEL Print-notarize.zip"
+  notarize "$WORK/MIXEL Print-notarize.zip"
   xcrun stapler staple "$APP"
   xcrun stapler validate "$APP"
   spctl --assess --type execute -vvv "$APP"
@@ -131,7 +131,7 @@ fi
 echo "==> building $DMG"
 STAGE="$WORK/dmg"
 mkdir -p "$STAGE"
-ditto "$APP" "$STAGE/PdfCraft.app"
+ditto "$APP" "$STAGE/MIXEL Print.app"
 ln -s /Applications "$STAGE/Applications"
 # Finder window layout: background, icon size and positions (packaging/macos/dmg/README.md).
 mkdir -p "$STAGE/.background"
@@ -141,7 +141,7 @@ rm -f "$DMG" "$WORK/raw.dmg"
 # makehybrid + convert builds the image without attaching a device, unlike `create -srcfolder`,
 # which is flaky on CI runners ("Resource busy") and hangs in sandboxed sessions.
 # The volume name has no version: .DS_Store finds the background through an alias that includes it.
-hdiutil makehybrid -hfs -hfs-volume-name "PdfCraft" -hfs-openfolder "$STAGE" -o "$WORK/raw.dmg" "$STAGE"
+hdiutil makehybrid -hfs -hfs-volume-name "MIXEL Print" -hfs-openfolder "$STAGE" -o "$WORK/raw.dmg" "$STAGE"
 hdiutil convert "$WORK/raw.dmg" -format UDZO -imagekey zlib-level=9 -o "$DMG"
 rm -f "$WORK/raw.dmg"
 sign "$DMG"
@@ -155,7 +155,7 @@ fi
 
 # ---- CLI ---------------------------------------------------------------------------------------
 echo "==> building $CLI_ZIP"
-CLI_DIR="$WORK/pdfcraft-cli-$VERSION-macos-$ARCH"
+CLI_DIR="$WORK/mixel-print-cli-$VERSION-macos-$ARCH"
 mkdir -p "$CLI_DIR"
 cp "$WORK/bin/pdfcraft-cli" "$CLI_DIR/"
 copy_docs "$CLI_DIR"

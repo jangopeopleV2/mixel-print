@@ -1,3 +1,12 @@
+<!-- MIXEL-HEADER -->
+# MIXEL Print
+
+**MIXEL Print** is part of the MIXEL creative suite: an open-source, pure-Rust alternative to Adobe Acrobat Pro for macOS, Windows, Linux and the web.
+
+Maintained by [MIXEL](https://mixel.ch). Based on [storytold/pdfcraft](https://github.com/storytold/pdfcraft) from the ArtCraft Crafting Apps by Brandon Thomas; licensed under Apache-2.0 / MIT (see `LICENSE-APACHE`, `LICENSE-MIT`, `NOTICE`). Upstream changes are merged from the `upstream` remote and re-branded with `rebrand.sh`.
+
+---
+
 <p align="center">
   <a href="https://getartcraft.com/">
     <picture>
@@ -8,7 +17,7 @@
 </p>
 
 
-<h1 align="center">PdfCraft</h1>
+<h1 align="center">MIXEL Print</h1>
 
 <p align="center">
   <b>The PDF workbench; an open-source, clean-room reimplementation of Adobe Acrobat, rebuilt in pure Rust.</b><br>
@@ -28,7 +37,7 @@
 </p>
 
 <p align="center">
-  <a href="https://getartcraft.com/apps/pdfcraft"><b>PdfCraft on getartcraft.com</b></a> ·
+  <a href="https://getartcraft.com/apps/pdfcraft"><b>MIXEL Print on getartcraft.com</b></a> ·
   <a href="https://getartcraft.com/">ArtCraft</a> ·
   <a href="https://getartcraft.com/apps">All Crafting Apps</a>
 </p>
@@ -36,9 +45,9 @@
 <br>
 
 <p align="center">
-  <img src="docs/images/pdfcraft-viewer.png" alt="PdfCraft with the PdfCraft Showcase cover page open, the All tools panel on the left and 20 threaded comments on the right" width="100%">
+  <img src="docs/images/pdfcraft-viewer.png" alt="MIXEL Print with the MIXEL Print Showcase cover page open, the All tools panel on the left and 20 threaded comments on the right" width="100%">
   <br>
-  <sub>The PdfCraft Showcase, a 13-page specimen PDF, open with the All tools panel and threaded comments.</sub>
+  <sub>The MIXEL Print Showcase, a 13-page specimen PDF, open with the All tools panel and threaded comments.</sub>
 </p>
 
 > [!NOTE]
@@ -66,13 +75,13 @@
 
 ## Community
 
-PdfCraft is part of [ArtCraft](https://getartcraft.com). Come say hello, get help and follow development:
+MIXEL Print is part of [ArtCraft](https://getartcraft.com). Come say hello, get help and follow development:
 
 - **Discord: [discord.gg/artcraft](https://discord.gg/artcraft)**. This is the fastest way to get help and share feedback. The app has a Discord button in its title bar.
 - **Web page:** [getartcraft.com/apps/pdfcraft](https://getartcraft.com/apps/pdfcraft)
 - **Source:** [github.com/storytold/pdfcraft](https://github.com/storytold/pdfcraft)
 
-The ArtCraft name and logos in `docs/brand/` are trademarks of the ArtCraft Team and are not open source. They may be used only unmodified, and only as part of PdfCraft (see `docs/brand/LICENSE-brand.txt`). Forks and modified versions must remove them.
+The ArtCraft name and logos in `docs/brand/` are trademarks of the ArtCraft Team and are not open source. They may be used only unmodified, and only as part of MIXEL Print (see `docs/brand/LICENSE-brand.txt`). Forks and modified versions must remove them.
 
 ## Highlights
 
@@ -103,7 +112,7 @@ No account, no telemetry, no cloud. It works offline and opens instantly. The en
 
 ## Read anything, beautifully
 
-PdfCraft renders PDFs with care for the details that make a page feel right: kerning and ligatures, right-to-left and complex scripts, vertical CJK, colour emoji, shadings, blend modes, soft masks and optional content.
+MIXEL Print renders PDFs with care for the details that make a page feel right: kerning and ligatures, right-to-left and complex scripts, vertical CJK, colour emoji, shadings, blend modes, soft masks and optional content.
 
 <p align="center">
   <img src="docs/images/pdfcraft-scripts.png" alt="The Scripts of the World page: Arabic, Hebrew, Devanagari, Thai, Greek, Cyrillic, Chinese, Korean, IPA, Armenian, Georgian and Tamil samples, with vertical Japanese in the right margin" width="100%">
@@ -174,7 +183,7 @@ Open **Organize pages** to see every page at once:
 
 When open documents exceed the window width, scroll over the tab strip with the mouse wheel or trackpad, or use its horizontal scrollbar. Opening or switching to a document brings its tab into view.
 
-Unsaved documents carry a dot on their tab, and closing or quitting asks before anything is lost. Changes are autosaved every minute. If PdfCraft ever quits unexpectedly, it offers to recover your work the next time it opens. Encrypted documents stay encrypted on disk.
+Unsaved documents carry a dot on their tab, and closing or quitting asks before anything is lost. Changes are autosaved every minute. If MIXEL Print ever quits unexpectedly, it offers to recover your work the next time it opens. Encrypted documents stay encrypted on disk.
 
 </td>
 <td width="50%" valign="top"><img src="docs/images/pdfcraft-split.png" alt="The Split document dialog over the organize view, set to one page per file and reporting that it creates 13 files from 13 pages"><br><sub>Split document: one page per file makes 13 files.</sub></td>
@@ -205,12 +214,12 @@ pdfcraft-cli split   report.pdf --every 10 --out-dir parts/
 
 ## Open protected documents and respect their rules
 
-PdfCraft implements the PDF standard security handler completely:
+MIXEL Print implements the PDF standard security handler completely:
 - every revision, from 40-bit RC4 to AES-256;
 - user and owner passwords, including Unicode passwords normalised with SASLprep;
 - crypt filters and attachment-only encryption.
 
-Documents restricted by their author show a clear notice, and PdfCraft honours their permissions. Enter the owner password and the restrictions lift. Edits to encrypted documents are saved encrypted, under the same keys.
+Documents restricted by their author show a clear notice, and MIXEL Print honours their permissions. Enter the owner password and the restrictions lift. Edits to encrypted documents are saved encrypted, under the same keys.
 
 <table>
 <tr>
@@ -247,7 +256,7 @@ Press <kbd>⌘K</kbd> to search every tool and command, or browse the **All tool
 <table>
 <tr>
 <td width="50%"><img src="docs/images/pdfcraft-palette.png" alt="The command palette searching for 'page', listing Page grid, Page labels, Rotate pages, Insert pages, Delete pages, Extract pages and more, each with the tool it belongs to"></td>
-<td width="50%"><img src="docs/images/pdfcraft-tools.png" alt="The Welcome to PdfCraft home screen with recommended tools, a recent file, a privacy note, and the full tool catalogue in the side panel"></td>
+<td width="50%"><img src="docs/images/pdfcraft-tools.png" alt="The Welcome to MIXEL Print home screen with recommended tools, a recent file, a privacy note, and the full tool catalogue in the side panel"></td>
 </tr>
 <tr>
 <td align="center"><sub>The <kbd>⌘K</kbd> command palette</sub></td>
@@ -287,7 +296,7 @@ Every engine feature is reachable without the GUI, through one table of JSON-Sch
 
   With `--root`, every file the script's steps read or write stays in that directory, including the PNG a step saves with `"out"` (the script itself is read from wherever you name it).
 
-- **An MCP server**, for AI agents such as Claude. **It is opt-in:** PdfCraft never starts it on its own, and it opens no network port. It runs only while an agent launches `pdfcraft-cli mcp`, talks over stdin/stdout, and stops when the agent disconnects. To enable it, add it to your agent's MCP configuration:
+- **An MCP server**, for AI agents such as Claude. **It is opt-in:** MIXEL Print never starts it on its own, and it opens no network port. It runs only while an agent launches `pdfcraft-cli mcp`, talks over stdin/stdout, and stops when the agent disconnects. To enable it, add it to your agent's MCP configuration:
 
   ```json
   { "mcpServers": { "pdfcraft": { "command": "pdfcraft-cli", "args": ["mcp", "--root", "/path/to/your/pdfs"] } } }
@@ -320,7 +329,7 @@ pdfcraft-cli ui --control ~/.pdfcraft-control.json screenshot --out window.png
 
 ## How it's built
 
-PdfCraft is a Cargo workspace of focused crates, layered so the core never depends on the UI:
+MIXEL Print is a Cargo workspace of focused crates, layered so the core never depends on the UI:
 
 | Crate | What it does |
 |---|---|
@@ -348,7 +357,7 @@ On top of those, two corpus sweeps run over real-world files:
 
 The output is verified with independent tools: hayro, qpdf and poppler.
 
-PdfCraft is a clean-room implementation. Its behaviour comes from the ISO 32000 specification and black-box observation, never from anyone else's code. Every icon, font and image is openly licensed and listed in [ATTRIBUTION.md](ATTRIBUTION.md).
+MIXEL Print is a clean-room implementation. Its behaviour comes from the ISO 32000 specification and black-box observation, never from anyone else's code. Every icon, font and image is openly licensed and listed in [ATTRIBUTION.md](ATTRIBUTION.md).
 
 ## Get started
 
@@ -380,7 +389,7 @@ Each [GitHub release](https://github.com/storytold/pdfcraft/releases) has ready-
 Windows, Linux (AppImage, Flatpak, `.deb`, `.rpm` and a tarball), FreeBSD and the web; see
 [Downloads](#downloads). On Gentoo, the community [::snakebyte
 overlay](https://github.com/switch87/snakebyte-overlay) packages the Linux release as
-`app-text/pdfcraft-bin` (not maintained by the PdfCraft team):
+`app-text/pdfcraft-bin` (not maintained by the MIXEL Print team):
 
 ```sh
 eselect repository add snakebyte git https://github.com/switch87/snakebyte-overlay.git
@@ -393,7 +402,7 @@ Logs, environment variables and other development notes are in [docs/development
 
 ## What's next
 
-PdfCraft is young and moving fast. The aim is a workbench where you can view, organize, annotate, fill, sign and edit PDFs, at parity with Acrobat Pro.
+MIXEL Print is young and moving fast. The aim is a workbench where you can view, organize, annotate, fill, sign and edit PDFs, at parity with Acrobat Pro.
 
 **Where it stands (October 2026), honestly:** about half of Acrobat Pro's offline features are in (88% of the must-haves), but that is roughly a third of the work, because the hardest parts are still ahead.
 
@@ -410,7 +419,7 @@ The honest assessment by area, what's lacking and where we're going are in **[RO
 
 ## Downloads
 
-**New to PdfCraft?** Download it from the [PdfCraft page on getartcraft.com](https://getartcraft.com/apps/pdfcraft). That's the easiest way to install it.
+**New to MIXEL Print?** Download it from the [MIXEL Print page on getartcraft.com](https://getartcraft.com/apps/pdfcraft). That's the easiest way to install it.
 
 **Want a specific build or format?** On GitHub, the [latest release](https://github.com/storytold/pdfcraft/releases/latest) has every build listed below, and [all releases](https://github.com/storytold/pdfcraft/releases) has earlier versions and their notes. `<ver>` in the file names is the version number, and `SHA256SUMS.txt` lists a checksum for every file.
 
@@ -473,19 +482,19 @@ Every Linux build needs glibc 2.35 or newer (Ubuntu 22.04+, Debian 12+, Fedora 3
 
 ## The Crafting Apps
 
-PdfCraft is one of the **Crafting Apps**: free, open-source creative tools from the
+MIXEL Print is one of the **Crafting Apps**: free, open-source creative tools from the
 [ArtCraft](https://getartcraft.com/) team, each written from scratch in Rust and each able to
 stand on its own.
 
 | | App | What it's for | Code | Learn more |
 |:-:|---|---|---|---|
-| <img src="https://raw.githubusercontent.com/storytold/photocraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.photocraft.png" alt="" width="32" height="32"> | **PhotoCraft** | Image editing: layers, masks, type and real PSD files | [GitHub](https://github.com/storytold/photocraft) | [Website](https://getartcraft.com/apps/photocraft) |
-| <img src="https://raw.githubusercontent.com/storytold/vectorcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.vectorcraft.png" alt="" width="32" height="32"> | **VectorCraft** | Vector illustration | [GitHub](https://github.com/storytold/vectorcraft) | [Website](https://getartcraft.com/apps/vectorcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/filmcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.filmcraft.png" alt="" width="32" height="32"> | **FilmCraft** | Video editing, color and sound | [GitHub](https://github.com/storytold/filmcraft) | [Website](https://getartcraft.com/apps/filmcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/lightcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.lightcraft.png" alt="" width="32" height="32"> | **LightCraft** | Photo library and raw development | [GitHub](https://github.com/storytold/lightcraft) | [Website](https://getartcraft.com/apps/lightcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/pdfcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.pdfcraft.png" alt="" width="32" height="32"> | **PdfCraft** | **Reading, organizing and protecting PDFs · you are here** | [GitHub](https://github.com/storytold/pdfcraft) | [Website](https://getartcraft.com/apps/pdfcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/effectcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.effectcraft.png" alt="" width="32" height="32"> | **EffectCraft** | Motion graphics and visual effects | [GitHub](https://github.com/storytold/effectcraft) | [Website](https://getartcraft.com/apps/effectcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/designcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.designcraft.png" alt="" width="32" height="32"> | **DesignCraft** | Page layout and publishing | [GitHub](https://github.com/storytold/designcraft) | [Website](https://getartcraft.com/apps/designcraft) |
+| <img src="https://raw.githubusercontent.com/storytold/photocraft/main/assets/app-icon/hicolor/64x64/apps/ch.mixel.photo.png" alt="" width="32" height="32"> | **MIXEL Photo** | Image editing: layers, masks, type and real PSD files | [GitHub](https://github.com/storytold/photocraft) | [Website](https://getartcraft.com/apps/photocraft) |
+| <img src="https://raw.githubusercontent.com/storytold/vectorcraft/main/assets/app-icon/hicolor/64x64/apps/ch.mixel.vector.png" alt="" width="32" height="32"> | **MIXEL Vector** | Vector illustration | [GitHub](https://github.com/storytold/vectorcraft) | [Website](https://getartcraft.com/apps/vectorcraft) |
+| <img src="https://raw.githubusercontent.com/storytold/filmcraft/main/assets/app-icon/hicolor/64x64/apps/ch.mixel.film.png" alt="" width="32" height="32"> | **MIXEL Film** | Video editing, color and sound | [GitHub](https://github.com/storytold/filmcraft) | [Website](https://getartcraft.com/apps/filmcraft) |
+| <img src="https://raw.githubusercontent.com/storytold/lightcraft/main/assets/app-icon/hicolor/64x64/apps/ch.mixel.light.png" alt="" width="32" height="32"> | **MIXEL Light** | Photo library and raw development | [GitHub](https://github.com/storytold/lightcraft) | [Website](https://getartcraft.com/apps/lightcraft) |
+| <img src="https://raw.githubusercontent.com/storytold/pdfcraft/main/assets/app-icon/hicolor/64x64/apps/ch.mixel.print.png" alt="" width="32" height="32"> | **MIXEL Print** | **Reading, organizing and protecting PDFs · you are here** | [GitHub](https://github.com/storytold/pdfcraft) | [Website](https://getartcraft.com/apps/pdfcraft) |
+| <img src="https://raw.githubusercontent.com/storytold/effectcraft/main/assets/app-icon/hicolor/64x64/apps/ch.mixel.effects.png" alt="" width="32" height="32"> | **MIXEL Effects** | Motion graphics and visual effects | [GitHub](https://github.com/storytold/effectcraft) | [Website](https://getartcraft.com/apps/effectcraft) |
+| <img src="https://raw.githubusercontent.com/storytold/designcraft/main/assets/app-icon/hicolor/64x64/apps/ch.mixel.design.png" alt="" width="32" height="32"> | **MIXEL Design** | Page layout and publishing | [GitHub](https://github.com/storytold/designcraft) | [Website](https://getartcraft.com/apps/designcraft) |
 
 And [**ArtCraft**](https://getartcraft.com/) itself, our AI image and video studio for artists who want real control.
 
@@ -508,15 +517,15 @@ And [**ArtCraft**](https://getartcraft.com/) itself, our AI image and video stud
   <a href="https://discord.gg/artcraft"><b>discord.gg/artcraft</b></a> ·
   <a href="https://getartcraft.com/">getartcraft.com</a> ·
   <a href="https://getartcraft.com/apps">The Crafting Apps</a> ·
-  <a href="https://getartcraft.com/apps/pdfcraft">PdfCraft</a>
+  <a href="https://getartcraft.com/apps/pdfcraft">MIXEL Print</a>
 </p>
 
 ---
 
 ## License and credits
 
-PdfCraft is dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option.
-Copyright (c) 2026 ArtCraft Team and the PdfCraft contributors. Required notices are in [NOTICE](NOTICE).
+MIXEL Print is dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option.
+Copyright (c) 2026 ArtCraft Team and the MIXEL Print contributors. Required notices are in [NOTICE](NOTICE).
 
 Bundled fonts, icons, images and other assets keep their own open licenses; each one is listed
 with its author, source and license in [ATTRIBUTION.md](ATTRIBUTION.md). Release builds also embed
@@ -525,10 +534,10 @@ the Japanese fonts of [craft-fonts](https://github.com/storytold/craft-fonts/blo
 
 The ArtCraft name, wordmark and logos in [`docs/brand/`](docs/brand/) are trademarks of the
 ArtCraft Team and are not covered by this license. They may be used only unmodified, and only as
-part of this repository and PdfCraft, under [`docs/brand/LICENSE-brand.txt`](docs/brand/LICENSE-brand.txt).
+part of this repository and MIXEL Print, under [`docs/brand/LICENSE-brand.txt`](docs/brand/LICENSE-brand.txt).
 Forks and modified versions must remove them.
 
-<sub>Adobe, Photoshop, Illustrator, Premiere Pro, Lightroom, Acrobat, After Effects and InDesign are trademarks or registered trademarks of Adobe Inc. in the United States and/or other countries. PdfCraft is an independent, open-source project and is not affiliated with, sponsored by or endorsed by Adobe Inc.; these names are used only to describe the workflows it is compatible with.</sub>
+<sub>Adobe, Photoshop, Illustrator, Premiere Pro, Lightroom, Acrobat, After Effects and InDesign are trademarks or registered trademarks of Adobe Inc. in the United States and/or other countries. MIXEL Print is an independent, open-source project and is not affiliated with, sponsored by or endorsed by Adobe Inc.; these names are used only to describe the workflows it is compatible with.</sub>
 
 <p align="center">
   <a href="https://getartcraft.com/"><img alt="ArtCraft" src="docs/brand/artcraft-mark.svg" width="28"></a><br>

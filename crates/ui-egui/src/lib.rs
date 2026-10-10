@@ -1,4 +1,4 @@
-//! pdfcraft-ui-egui — the first PdfCraft shell (L7).
+//! pdfcraft-ui-egui — the first MIXEL Print shell (L7).
 //!
 //! Layout grammar follows plan/acrobat/02-ui-ux.md §1: tab strip, mode bar, left tool panel,
 //! floating quick-action bar, document area, right panel + right rail with page navigation.
@@ -402,9 +402,9 @@ pub struct PdfCraftApp {
     pub palette_query: String,
     pub all_tools_expanded: bool,
     pub recent: Vec<RecentFile>,
-    /// Preferences: reopen the files that were open when PdfCraft last closed (#442).
+    /// Preferences: reopen the files that were open when MIXEL Print last closed (#442).
     pub reopen_last_session: bool,
-    /// The files open when PdfCraft last closed, read from the settings for
+    /// The files open when MIXEL Print last closed, read from the settings for
     /// [`PdfCraftApp::reopen_last_files`].
     pub last_session: last_session::LastSession,
     /// Quitting closes unsaved tabs one by one: what was open when the quit began.
@@ -1145,7 +1145,7 @@ impl PdfCraftApp {
         client
     }
 
-    /// Open a web link in the system browser (a new tab on the web). Only for PdfCraft's own
+    /// Open a web link in the system browser (a new tab on the web). Only for MIXEL Print's own
     /// links; an address that came from a document goes through [`Self::request_document_url`].
     pub fn open_url(&mut self, url: &str) {
         if let Some(ctx) = &self.ctx {
@@ -1168,9 +1168,9 @@ impl PdfCraftApp {
             Err(e) => {
                 use pdfcraft_engine::links::BlockedLink;
                 let template = if matches!(e, BlockedLink::MailFile | BlockedLink::MailEncodedWord) {
-                    "{who} in this document tried to open an address PdfCraft won't open: {e}."
+                    "{who} in this document tried to open an address MIXEL Print won't open: {e}."
                 } else {
-                    "{who} in this document tried to open an address PdfCraft won't open: {e}. Only web (http, https) and email (mailto) links open from documents."
+                    "{who} in this document tried to open an address MIXEL Print won't open: {e}. Only web (http, https) and email (mailto) links open from documents."
                 };
                 self.notify_fmt(template, &[("who", tl!(origin.noun())), ("e", &e.to_string())]);
             }
@@ -1910,7 +1910,7 @@ impl eframe::App for PdfCraftApp {
             .and_then(|i| self.session.get(self.views[i].id))
             .map(|d| d.display_name())
             .or_else(|| self.combine_showing().then(|| tl!("Combine files").to_owned()))
-            .map_or_else(|| "PdfCraft".to_owned(), |name| format!("{name} — PdfCraft"));
+            .map_or_else(|| "MIXEL Print".to_owned(), |name| format!("{name} — MIXEL Print"));
         if title != self.window_title {
             ctx.send_viewport_cmd(egui::ViewportCommand::Title(title.clone()));
             self.window_title = title;

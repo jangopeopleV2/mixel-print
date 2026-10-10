@@ -1,11 +1,11 @@
 [Desktop Entry]
 Type=Application
-Name=PdfCraft
+Name=MIXEL Print
 GenericName=PDF Editor
 Comment=Read, organize, combine, split and secure PDFs
 Exec=pdfcraft %U
 TryExec=pdfcraft
-Icon=ai.storyteller.pdfcraft
+Icon=ch.mixel.print
 Terminal=false
 StartupNotify=true
 StartupWMClass=pdfcraft

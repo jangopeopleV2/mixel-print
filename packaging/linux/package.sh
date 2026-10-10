@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build and package PdfCraft for Linux (<arch> is x86_64 or aarch64):
+# Build and package MIXEL Print for Linux (<arch> is x86_64 or aarch64):
 #
 #   $DIST/pdfcraft-<version>-linux-<arch>.AppImage  any distro with glibc >= the build host's
 #   $DIST/pdfcraft-<version>-linux-<arch>.AppImage.zsync  delta updates (needs zsyncmake)
@@ -18,7 +18,7 @@ set -euo pipefail
 # shellcheck source=../env.sh
 . "$(dirname "${BASH_SOURCE[0]}")/../env.sh"
 HERE="$ROOT/packaging/linux"
-APP_ID=ai.storyteller.pdfcraft
+APP_ID=ch.mixel.print
 
 SKIP_BUILD=0
 FORMATS="appimage deb rpm tar cli"
@@ -37,10 +37,10 @@ case "$ARCH" in
   aarch64 | arm64) ARCH=aarch64; DEB_ARCH=arm64 ;;
   *) echo "unsupported architecture $ARCH" >&2; exit 2 ;;
 esac
-export PDFCRAFT_MAINTAINER="${PDFCRAFT_MAINTAINER:-PdfCraft maintainers <pdfcraft@storyteller.ai>}"
+export PDFCRAFT_MAINTAINER="${PDFCRAFT_MAINTAINER:-MIXEL Print maintainers <pdfcraft@storyteller.ai>}"
 BASENAME="pdfcraft-$VERSION-linux-$ARCH"
 
-echo "==> PdfCraft $VERSION for Linux $ARCH ($FORMATS)"
+echo "==> MIXEL Print $VERSION for Linux $ARCH ($FORMATS)"
 
 if [ "$SKIP_BUILD" = 0 ]; then
   (cd "$ROOT" && cargo build --release --locked -p pdfcraft -p pdfcraft-cli)
@@ -110,7 +110,7 @@ fi
 
 # ---- AppImage -----------------------------------------------------------------------------------
 if has appimage; then
-  APPDIR="$WORK/PdfCraft.AppDir"
+  APPDIR="$WORK/MIXEL Print.AppDir"
   cp -R "$STAGE" "$APPDIR"
   mv "$APPDIR/usr/share/doc" "$WORK/doc-unused"
   ln -s usr/bin/pdfcraft "$APPDIR/AppRun"

@@ -101,7 +101,7 @@ pub enum FillMark {
 }
 
 impl FillMark {
-    /// The `/Name` of the stamp PdfCraft draws for it.
+    /// The `/Name` of the stamp MIXEL Print draws for it.
     pub fn name(self) -> &'static str {
         match self {
             FillMark::Check => "PCCheck",
@@ -121,7 +121,7 @@ impl FillMark {
     }
 }
 
-/// The stamps of Acrobat's stamp palette (drawn in PdfCraft's own style).
+/// The stamps of Acrobat's stamp palette (drawn in MIXEL Print's own style).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum StampKind {
     // Standard business.
@@ -717,7 +717,7 @@ fn annot_dict(doc: &Document, r: ObjRef) -> Dict {
 
 /// A Fill & Sign item: typed text, a check/cross/dot/line, or a typed, drawn or image signature.
 ///
-/// New items carry `/PCFillSign`. Older files are recognised from the dictionaries PdfCraft
+/// New items carry `/PCFillSign`. Older files are recognised from the dictionaries MIXEL Print
 /// already writes (`/IT /FreeTextTypeWriter`, stamp `/Name`, drawn ink whose subject is
 /// "Signature").
 pub fn is_fill_sign(doc: &Document, d: &Dict) -> bool {
@@ -1079,7 +1079,7 @@ pub fn add_annotation(doc: &mut Document, new: &NewAnnotation, meta: &Meta) -> R
         Shape::Stamp { stamp, by, .. } => {
             d.set(b"C".to_vec(), rgb(style.color));
             d.set(b"Name".to_vec(), Object::name(stamp.name()));
-            // Marks the stamp as drawn by PdfCraft: other stamps with standard names keep
+            // Marks the stamp as drawn by MIXEL Print: other stamps with standard names keep
             // their own artwork.
             d.set(b"PCStamp".to_vec(), Object::Bool(true));
             if let Some(b) = by {

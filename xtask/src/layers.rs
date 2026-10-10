@@ -1,7 +1,7 @@
 //! Dependency layering rules (plan/architecture.md §3), enforced by `cargo xtask layers`.
 //!
 //! The rule engine works on a small, metadata-independent model so it can be unit-tested;
-//! `from_metadata` builds that model from `cargo metadata`. (Structure shared with PhotoCraft.)
+//! `from_metadata` builds that model from `cargo metadata`. (Structure shared with MIXEL Photo.)
 
 use serde_json::Value;
 

@@ -1,4 +1,4 @@
-//! PdfCraft desktop app.
+//! MIXEL Print desktop app.
 //!
 //! Usage: `pdfcraft [options] [files…]`
 //! `--create-images [images…]` stages the images in one PDF and asks for the page DPI.
@@ -10,7 +10,7 @@
 //!  --cover on|off  --default-layout continuous|two-up|single  --default-zoom fit-width|fit-page|<percent>`
 //!
 //! `--new-window` opens a window of its own. Without it, on Windows, a launch that only names files
-//! hands them to the PdfCraft already running, where they open as tabs (`single_instance`).
+//! hands them to the MIXEL Print already running, where they open as tabs (`single_instance`).
 //!
 //! `--control <file>` enables the UI control channel (off by default): the app listens on a random
 //! loopback port and writes `{"port", "token", "pid"}` to `<file>` (owner-only permissions). The
@@ -38,26 +38,26 @@ mod updates;
 mod windows_manifest;
 
 /// Freedesktop app id: the `.desktop` file name and the hicolor icon name.
-const APP_ID: &str = "ai.storyteller.pdfcraft";
+const APP_ID: &str = "ch.mixel.print";
 
 /// The app icon (assets/app-icon/README.md). macOS gets the version on Apple's icon grid, with a
 /// transparent margin; Windows and Linux get the full-bleed tile.
 #[cfg(target_os = "macos")]
 const APP_ICON_PNG: &[u8] = include_bytes!("../../../assets/app-icon/pdfcraft-1024.png");
 #[cfg(not(target_os = "macos"))]
-const APP_ICON_PNG: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/256x256/apps/ai.storyteller.pdfcraft.png");
+const APP_ICON_PNG: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/256x256/apps/ch.mixel.print.png");
 
 /// The app was called PrintCraft before; settings saved then are under this key.
 const LEGACY_STORAGE_KEY: &str = "printcraft";
 
 /// The settings folder: `app.ron` and the `logs` folder (docs/development.md). In portable mode
 /// it is `PdfCraftData` beside the executable (#157). eframe would otherwise derive it from the
-/// app id; keep it under "PdfCraft".
+/// app id; keep it under "MIXEL Print".
 fn settings_dir() -> Option<std::path::PathBuf> {
     if let Some(dir) = pdfcraft_ui_egui::portable::data_dir() {
         return Some(dir.to_path_buf());
     }
-    eframe::storage_dir("PdfCraft")
+    eframe::storage_dir("MIXEL Print")
 }
 
 /// Move the settings and crash-recovery folders of the app's former name, PrintCraft, to the new
@@ -72,7 +72,7 @@ fn migrate_legacy_folders() {
     // Recovery lives in the settings folder except on Windows, where it is under %LOCALAPPDATA%.
     if cfg!(windows) {
         let local = std::env::var_os("LOCALAPPDATA").filter(|v| !v.is_empty()).map(std::path::PathBuf::from);
-        moves.push((local.as_ref().map(|d| d.join("PrintCraft")), local.map(|d| d.join("PdfCraft"))));
+        moves.push((local.as_ref().map(|d| d.join("PrintCraft")), local.map(|d| d.join("MIXEL Print"))));
     }
     for (old, new) in moves {
         let (Some(old), Some(new)) = (old, new) else { continue };
@@ -91,7 +91,7 @@ fn migrate_legacy_folders() {
 
 /// Desktop launchers (GNOME Files, KDE Dolphin…) only recognise an app as the default handler for a
 /// mime type if its `Exec` takes URIs (`%u`/`%U`), not just paths (`%F`); the packaged `.desktop`
-/// file uses `%U` accordingly (packaging/linux/ai.storyteller.pdfcraft.desktop). Decode a local
+/// file uses `%U` accordingly (packaging/linux/ch.mixel.print.desktop). Decode a local
 /// `file://` argument (`file:///path` or `file://localhost/path`) to a plain path here so the rest
 /// of the app, which only ever opens paths, is unaffected. Other schemes (`http://`, `mailto:`…),
 /// URIs naming another host, and plain paths pass through untouched.
@@ -169,13 +169,13 @@ fn main() -> eframe::Result {
     // Records logged until now are written to it first.
     if let (Some(logger), Some(dir)) = (logger, settings_dir()) {
         match logger.attach_dir(&dir.join("logs")) {
-            Ok(path) => log::info!("PdfCraft {}, log file {}", env!("CARGO_PKG_VERSION"), path.display()),
+            Ok(path) => log::info!("MIXEL Print {}, log file {}", env!("CARGO_PKG_VERSION"), path.display()),
             // Standard error only by now (`attach_dir` gave up on the file); unlike `eprintln!`, never panics.
             Err(e) => log::warn!("no log file: {e}"),
         }
     }
     // Windows: a launch that only names files (an Outlook attachment, an Explorer double-click)
-    // hands them to the PdfCraft already running and exits (#282, #317). Any option means the
+    // hands them to the MIXEL Print already running and exits (#282, #317). Any option means the
     // caller wants this launch's own window.
     let may_hand_off = !new_window && !files.is_empty() && options.is_empty() && control_file.is_none() && !create_images;
     let instance = match single_instance::claim(&single_instance::absolute(&files), may_hand_off) {
@@ -193,7 +193,7 @@ fn main() -> eframe::Result {
     let started = Rc::new(Cell::new(false));
     let first = if choice == RendererChoice::Gl { eframe::Renderer::Glow } else { eframe::Renderer::Wgpu };
     let result = eframe::run_native(
-        "PdfCraft",
+        "MIXEL Print",
         native_options(integrated, first),
         app_creator(
             launch.clone(),
@@ -211,7 +211,7 @@ fn main() -> eframe::Result {
             // usually still works there, so that's better than quitting.
             log::error!("the GPU renderer (wgpu) didn't start: {e}. Starting with OpenGL instead; set PDFCRAFT_RENDERER=gl to skip wgpu.");
             eframe::run_native(
-                "PdfCraft",
+                "MIXEL Print",
                 native_options(integrated, eframe::Renderer::Glow),
                 app_creator(
                     launch,
@@ -254,11 +254,11 @@ fn retry_with_gl(choice: RendererChoice, app_started: bool) -> bool {
 /// The window and renderer settings for one run.
 fn native_options(integrated: bool, renderer: eframe::Renderer) -> eframe::NativeOptions {
     let mut viewport = egui::ViewportBuilder::default()
-        .with_title("PdfCraft")
+        .with_title("MIXEL Print")
         .with_inner_size([1440.0, 920.0])
         .with_min_inner_size([820.0, 520.0])
         .with_drag_and_drop(true)
-        // Wayland app id: matches packaging/linux/ai.storyteller.pdfcraft.desktop.
+        // Wayland app id: matches packaging/linux/ch.mixel.print.desktop.
         .with_app_id(APP_ID);
     // Dock, taskbar, Alt-Tab and launcher icon when running unbundled.
     match eframe::icon_data::from_png_bytes(APP_ICON_PNG) {
@@ -365,7 +365,7 @@ fn app_creator<'a>(
 /// `unsafe` calls.
 fn notify_software_renderer(app: &mut PdfCraftApp, device_type: eframe::wgpu::DeviceType) {
     if device_type == eframe::wgpu::DeviceType::Cpu {
-        app.notify_tr("PdfCraft is drawing without a graphics processor, so it may be slow. Updating the graphics driver may help.");
+        app.notify_tr("MIXEL Print is drawing without a graphics processor, so it may be slow. Updating the graphics driver may help.");
     }
 }
 
@@ -456,7 +456,7 @@ fn write_control_file(path: &str, port: u16, token: &str) -> std::io::Result<()>
 ///   containers, remote sessions) the power preference alone decides.
 /// - On Windows, use Direct3D 12, falling back to OpenGL, and never load Vulkan drivers unless
 ///   `WGPU_BACKEND` asks for them. Creating a Vulkan instance loads every installed Vulkan driver
-///   into the process, and a faulty one (an Intel driver in issue #37) crashed PdfCraft before
+///   into the process, and a faulty one (an Intel driver in issue #37) crashed MIXEL Print before
 ///   its window appeared. D3D12 is the native, best-supported backend there.
 fn configure_gpu(native: &mut eframe::NativeOptions) {
     let eframe::egui_wgpu::WgpuSetup::CreateNew(setup) = &mut native.wgpu_options.wgpu_setup else { return };
@@ -856,8 +856,8 @@ mod tests {
     fn a_gpu_error_while_a_window_is_set_up_is_returned_not_a_panic() {
         // Issue #519: on a 2015 Intel GPU, wgpu's GL backend couldn't configure the window's
         // surface (`GpuWaitTimeout`), and wgpu's default error handler panicked before the app was
-        // created, so PdfCraft never got to retry with OpenGL. vendor/egui-wgpu configures a new
-        // window's surface inside `catch_errors`. A real device on PdfCraft's own GPU settings,
+        // created, so MIXEL Print never got to retry with OpenGL. vendor/egui-wgpu configures a new
+        // window's surface inside `catch_errors`. A real device on MIXEL Print's own GPU settings,
         // and an error wgpu raises before anything reaches the driver: a texture one pixel wider
         // than the device allows.
         use eframe::wgpu;

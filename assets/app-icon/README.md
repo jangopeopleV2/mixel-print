@@ -1,6 +1,6 @@
-# PdfCraft app icon
+# MIXEL Print app icon
 
-<img src="pdfcraft-small.svg" alt="PdfCraft app icon: an engraved lion's head on green" width="128">
+<img src="pdfcraft-small.svg" alt="MIXEL Print app icon: an engraved lion's head on green" width="128">
 
 **Creature:** a lion, in a frontal head-and-shoulders portrait, mane running off the bottom of the tile.
 
@@ -13,7 +13,7 @@ a full-bleed colour field, no frame or roundel, the animal looking at the viewer
 |---|---|---|
 | Ink | `#0b0b0c` | line work and the figure's contour |
 | Paper | `#efe9dc` | the figure (the lion's silhouette) |
-| PdfCraft green (app colour) | `#12a58a` | the full-bleed field |
+| MIXEL Print green (app colour) | `#12a58a` | the full-bleed field |
 
 **Tile:** `viewBox="0 0 512 512"`, a rounded square with `rx=112` that clips everything. Windows and Linux
 icons use the full-bleed tile. macOS icons put it on Apple's grid (an 824 px body centred on a transparent
@@ -33,11 +33,11 @@ Licence: [LICENSE.txt](LICENSE.txt) (`MIT OR Apache-2.0`, like the repo).
 | `pdfcraft-1024.png` | 1024 px on Apple's grid; also the runtime Dock icon on macOS |
 | `pdfcraft.icns` | macOS icon (16–1024 px) |
 | `pdfcraft.ico` | Windows icon (16–256 px), embedded in `pdfcraft.exe` by `apps/pdfcraft/build.rs` |
-| `hicolor/<n>x<n>/apps/ai.storyteller.pdfcraft.png` | Linux hicolor theme, 16–512 px; the 256 px one is the runtime icon on Windows and Linux |
-| `hicolor/scalable/apps/ai.storyteller.pdfcraft.svg` | Linux scalable icon (copy of the master) |
+| `hicolor/<n>x<n>/apps/ch.mixel.print.png` | Linux hicolor theme, 16–512 px; the 256 px one is the runtime icon on Windows and Linux |
+| `hicolor/scalable/apps/ch.mixel.print.svg` | Linux scalable icon (copy of the master) |
 
 Where it shows: `apps/pdfcraft/src/main.rs` sets the window icon (Dock, taskbar, Alt-Tab, launcher) and the
-Wayland app id `ai.storyteller.pdfcraft`; `packaging/linux/ai.storyteller.pdfcraft.desktop` names the
+Wayland app id `ch.mixel.print`; `packaging/linux/ch.mixel.print.desktop` names the
 hicolor icon.
 
 ## Regenerate

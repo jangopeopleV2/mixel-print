@@ -1,6 +1,6 @@
 [package]
 name = "pdfcraft"
-description = "PdfCraft desktop app"
+description = "MIXEL Print desktop app"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -25,7 +25,7 @@ log = { workspace = true }
 [target.'cfg(target_os = "macos")'.dependencies]
 # Finder double-click / Open With / Dock drops arrive as Apple events (#73); this small audited
 # crate registers the handler (Objective-C interop needs unsafe, which our workspace forbids)
-# behind a safe API. Same version as PhotoCraft. Pinned exactly: review the diff before bumping.
+# behind a safe API. Same version as MIXEL Photo. Pinned exactly: review the diff before bumping.
 fmv-macos-events = "=0.1.0"
 
 [dev-dependencies]

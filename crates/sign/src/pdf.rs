@@ -532,7 +532,7 @@ fn validate_into(doc: &Document, bytes: &[u8], trust: &TrustStore, v: &Dict, inf
     // is "invalid".
     let unsupported = |info: &mut SignatureInfo, why: &str| {
         info.status = Status::Unknown;
-        info.details.push(format!("PdfCraft can't check this signature yet: {why}."));
+        info.details.push(format!("MIXEL Print can't check this signature yet: {why}."));
     };
     if info.sub_filter.as_deref() == Some("adbe.x509.rsa_sha1") {
         return validate_x509_rsa_sha1(doc, bytes, trust, v, info, cache, (l0, o1, covered), &contents);
@@ -935,12 +935,12 @@ fn validate_x509_rsa_sha1(
             info.certificate = Some(cert);
             return fail(info, "The document has been altered or corrupted since the signature was applied.");
         }
-        // Only what PdfCraft doesn't support yet is "can't check"; a key or value that is
+        // Only what MIXEL Print doesn't support yet is "can't check"; a key or value that is
         // malformed is a signature that doesn't verify (as on the CMS path).
         Err(SignError::Unsupported(e)) => {
             info.certificate = Some(cert);
             info.status = Status::Unknown;
-            info.details.push(format!("PdfCraft can't check this signature yet: {e}."));
+            info.details.push(format!("MIXEL Print can't check this signature yet: {e}."));
             return;
         }
         Err(e) => {
@@ -1398,7 +1398,7 @@ fn sign_inner(
         }
     }
     let mut app = Dict::new();
-    app.set(b"Name".to_vec(), Object::name("PdfCraft"));
+    app.set(b"Name".to_vec(), Object::name("MIXEL Print"));
     let mut build = Dict::new();
     build.set(b"App".to_vec(), Object::Dict(app));
     v.set(b"Prop_Build".to_vec(), Object::Dict(build));
@@ -1568,7 +1568,7 @@ pub fn timestamp_document(doc: &Document, tsa: &dyn crate::timestamp::TimestampA
     v.set(b"Contents".to_vec(), Object::String(PdfString { bytes: vec![0; TOKEN_RESERVE], hex: true }));
     v.set(b"M".to_vec(), PdfString::literal(date.as_bytes().to_vec()));
     let mut app = Dict::new();
-    app.set(b"Name".to_vec(), Object::name("PdfCraft"));
+    app.set(b"Name".to_vec(), Object::name("MIXEL Print"));
     let mut build = Dict::new();
     build.set(b"App".to_vec(), Object::Dict(app));
     v.set(b"Prop_Build".to_vec(), Object::Dict(build));

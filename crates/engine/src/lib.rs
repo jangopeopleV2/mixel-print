@@ -245,7 +245,7 @@ pub struct Document {
     /// What field scripts printed or asked for (see [`Session::take_js_output`]).
     js_output: js::JsOutput,
     /// Dynamic XFA forms: what laying the template out produced (pages and fields are
-    /// PdfCraft's; Adobe's viewers draw the form from the XFA packets themselves).
+    /// MIXEL Print's; Adobe's viewers draw the form from the XFA packets themselves).
     pub xfa: Option<XfaLayout>,
     /// The parsed template of a laid-out XFA form, for its scripts.
     xfa_template: Option<Arc<pdfcraft_xfa::model::Template>>,
@@ -508,7 +508,7 @@ fn is_placeholder_title(title: &str) -> bool {
 }
 
 /// What is displayed: the working file, plus (in memory only, never saved) the appearances
-/// PdfCraft draws for comments that have none ([`pdfcraft_annot::with_missing_appearances`]).
+/// MIXEL Print draws for comments that have none ([`pdfcraft_annot::with_missing_appearances`]).
 /// The working file is unchanged, and so is everything that reads it (saving, signatures, …).
 fn display_bytes(editor: Option<&Editor>, bytes: &Arc<Vec<u8>>) -> Arc<Vec<u8>> {
     let Some(display) = editor.and_then(|e| pdfcraft_annot::with_missing_appearances(&e.cos)) else { return bytes.clone() };

@@ -19,9 +19,9 @@ fn main() {
     let mut res = winresource::WindowsResource::new();
     res.set_icon("../../assets/app-icon/pdfcraft.ico")
         .set_manifest(windows_manifest::WINDOWS_MANIFEST)
-        .set("ProductName", "PdfCraft")
-        .set("FileDescription", "PdfCraft PDF workbench")
-        .set("LegalCopyright", "Copyright (c) the PdfCraft contributors. MIT OR Apache-2.0.")
+        .set("ProductName", "MIXEL Print")
+        .set("FileDescription", "MIXEL Print PDF workbench")
+        .set("LegalCopyright", "Copyright (c) the MIXEL Print contributors. MIT OR Apache-2.0.")
         .set("OriginalFilename", "pdfcraft.exe")
         .set("InternalName", "pdfcraft");
     if let Err(e) = res.compile() {
