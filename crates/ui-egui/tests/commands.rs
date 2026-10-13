@@ -44,6 +44,53 @@ fn harness() -> Harness<'static, PdfCraftApp> {
     h
 }
 
+fn tool_harness(pick: Vec<String>, run_inline: bool) -> Harness<'static, PdfCraftApp> {
+    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
+        let mut app = PdfCraftApp::new();
+        app.set_option("language", "en").unwrap();
+        app.pick_override = Some(pick);
+        app.run_inline = run_inline;
+        app
+    });
+    h.run_steps(2);
+    h
+}
+
+/// Frame counts cannot establish completion of the native document-open worker.
+fn wait_until(h: &mut Harness<'static, PdfCraftApp>, what: &str, ready: impl Fn(&PdfCraftApp) -> bool) {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
+    while !ready(h.state()) {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "timed out waiting for {what}: views={}, active={:?}, dialog={:?}, password={:?}, toast={:?}",
+            h.state().views.len(),
+            h.state().active,
+            h.state().dialog,
+            h.state().password_prompt.as_ref().map(|p| (&p.name, &p.error)),
+            h.state().toast,
+        );
+        h.run_steps(1);
+        std::thread::sleep(std::time::Duration::from_millis(1));
+    }
+}
+
+/// Publishing worker state and painting its dialog are separate frame transitions.
+fn wait_for_export_label(h: &mut Harness<'static, PdfCraftApp>) {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
+    while h.query_by_label("Export to Text").is_none() {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "timed out waiting for the painted Export to Text dialog: views={}, active={:?}, dialog={:?}",
+            h.state().views.len(),
+            h.state().active,
+            h.state().dialog,
+        );
+        assert!(matches!(h.state().dialog, Some(Dialog::Export(_))), "the requested export remains open while its label is painted");
+        h.run_steps(1);
+        std::thread::sleep(std::time::Duration::from_millis(1));
+    }
+}
+
 /// Commands that open a native file picker can't run headless.
 /// (Create ▸ Clipboard reads the system clipboard: tests use `create_from_clip`.)
 const PICKERS: &[&str] = &[
@@ -60,6 +107,7 @@ const PICKERS: &[&str] = &[
     "ocr.recognize_batch",
     "form.merge_data",
     "export.docx",
+    "export.pptx",
     "export.html",
     "export.rtf",
     "measure.export",
@@ -75,6 +123,19 @@ fn every_registered_command_is_implemented() {
         app.set_option("language", "en").unwrap();
         if spec.id.starts_with("form.") || spec.id == "comment.flatten" {
             app.open_bytes("form.pdf", None, include_bytes!("data/form.pdf").to_vec()).unwrap();
+        } else if spec.id == "protect.unlock" {
+            // Only a permissions password: opens restricted, and can be unlocked.
+            let mut doc = pdfcraft_cos::Document::open(std::sync::Arc::new(fixture(3))).unwrap();
+            doc.set_encryption(&pdfcraft_cos::NewEncryption {
+                algorithm: pdfcraft_cos::Algorithm::Aes256,
+                user_password: "",
+                owner_password: "owner",
+                permissions: 0b0100,
+                encrypt_metadata: true,
+                seed: [5; 32],
+            })
+            .unwrap();
+            app.open_bytes("restricted.pdf", None, pdfcraft_cos::write_full(&doc, &Default::default()).unwrap()).unwrap();
         } else {
             app.open_bytes("doc.pdf", None, fixture(3)).unwrap();
         }
@@ -155,6 +216,161 @@ fn disabled_commands_explain_themselves() {
 }
 
 #[test]
+fn a_tool_chosen_with_no_document_asks_for_one_and_runs_on_it() {
+    let dir = std::env::temp_dir().join(format!("pdfcraft-tool-open-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("picked.pdf");
+    let bytes = fixture(2);
+    std::fs::write(&path, &bytes).unwrap();
+    let pick = path.to_string_lossy().into_owned();
+    for run_inline in [false, true] {
+        let mut h = tool_harness(vec![pick.clone()], run_inline);
+        h.state_mut().run_command("export.text");
+        assert!(h.state().toast.as_ref().is_none_or(|t| t.0 != "Open a document first"));
+        assert!(h.state().views.is_empty(), "the picker returns before opening the file");
+        wait_until(&mut h, "the picked document and its requested export", |app| {
+            app.active == Some(0) && matches!(app.dialog, Some(Dialog::Export(_)))
+        });
+        assert_eq!(h.state().views.len(), 1, "the picked file opens once");
+        let doc = h.state().session.get(h.state().views[0].id).unwrap();
+        assert_eq!(doc.name, "picked.pdf");
+        assert_eq!(doc.path.as_deref(), Some(pick.as_str()));
+        assert_eq!(doc.bytes.as_ref(), &bytes);
+        assert_eq!(doc.info.pages.len(), 2);
+        assert!(!doc.dirty);
+        assert!(h.state().password_prompt.is_none());
+        wait_for_export_label(&mut h);
+        h.get_by_label("Export to Text");
+        h.run_steps(3);
+        assert_eq!(h.state().views.len(), 1);
+        assert_eq!(h.state().active, Some(0));
+        assert!(matches!(h.state().dialog, Some(Dialog::Export(_))), "and the tool runs on it: {:?}", h.state().dialog);
+    }
+    // Cancelled: nothing opens and nothing runs.
+    let mut h = tool_harness(Vec::new(), false);
+    h.state_mut().run_command("export.text");
+    h.run_steps(3);
+    assert!(h.state().active.is_none() && h.state().dialog.is_none());
+    assert!(h.state().views.is_empty() && h.state().password_prompt.is_none());
+    h.state_mut().open_bytes("unrelated.pdf", None, fixture(1)).unwrap();
+    h.run_steps(3);
+    assert_eq!(h.state().views.len(), 1);
+    assert_eq!(h.state().active, Some(0));
+    assert!(h.state().dialog.is_none(), "a cancelled tool cannot run on a later unrelated document");
+    assert_eq!(std::fs::read(&path).unwrap(), bytes, "opening/export setup leaves the source intact");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn a_tool_waits_for_the_picked_files_password_and_cancellation_discards_it() {
+    let dir = std::env::temp_dir().join(format!("pdfcraft-tool-password-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let mut document = pdfcraft_cos::Document::open(std::sync::Arc::new(fixture(2))).unwrap();
+    document
+        .set_encryption(&pdfcraft_cos::NewEncryption {
+            algorithm: pdfcraft_cos::Algorithm::Aes256,
+            user_password: "test-password",
+            owner_password: "owner",
+            // Exporting text requires the copying permission (PDF Table 22, bit 5).
+            permissions: 0b0001_0100,
+            encrypt_metadata: true,
+            seed: [7; 32],
+        })
+        .unwrap();
+    let bytes = pdfcraft_cos::write_full(&document, &Default::default()).unwrap();
+    let path = dir.join("encrypted.pdf");
+    std::fs::write(&path, &bytes).unwrap();
+    let pick = path.to_string_lossy().into_owned();
+    for run_inline in [false, true] {
+        for cancel in [false, true] {
+            let mut h = tool_harness(vec![pick.clone()], run_inline);
+            h.state_mut().run_command("export.text");
+            wait_until(&mut h, "the picked file's password prompt", |app| app.password_prompt.is_some());
+            let prompt = h.state().password_prompt.as_ref().unwrap();
+            assert_eq!(prompt.name, "encrypted.pdf");
+            assert_eq!(prompt.path.as_deref(), Some(pick.as_str()));
+            assert_eq!(prompt.bytes.as_ref(), &bytes);
+            assert!(h.state().views.is_empty() && h.state().active.is_none() && h.state().dialog.is_none());
+            h.state_mut().submit_password(Some("wrong-password".into()));
+            wait_until(&mut h, "the same file's incorrect-password response", |app| app.password_prompt.as_ref().is_some_and(|p| p.error.is_some()));
+            let prompt = h.state().password_prompt.as_ref().unwrap();
+            assert_eq!(prompt.name, "encrypted.pdf");
+            assert_eq!(prompt.path.as_deref(), Some(pick.as_str()));
+            assert_eq!(prompt.bytes.as_ref(), &bytes);
+            assert_eq!(prompt.error.as_deref(), Some("Incorrect password. Try again."));
+            assert!(h.state().views.is_empty() && h.state().active.is_none() && h.state().dialog.is_none());
+            h.state_mut().submit_password((!cancel).then(|| "test-password".into()));
+            if cancel {
+                h.run_steps(3);
+                assert!(h.state().password_prompt.is_none() && h.state().views.is_empty() && h.state().dialog.is_none());
+                h.state_mut().open_bytes("unrelated.pdf", None, fixture(1)).unwrap();
+                h.run_steps(3);
+                assert_eq!(h.state().views.len(), 1);
+                assert_eq!(h.state().active, Some(0));
+                assert!(h.state().dialog.is_none(), "cancelling the password discards the tool");
+            } else {
+                wait_until(&mut h, "the unlocked file and its requested export", |app| {
+                    app.password_prompt.is_none() && app.active == Some(0) && matches!(app.dialog, Some(Dialog::Export(_)))
+                });
+                assert_eq!(h.state().views.len(), 1);
+                let doc = h.state().session.get(h.state().views[0].id).unwrap();
+                assert_eq!(doc.name, "encrypted.pdf");
+                assert_eq!(doc.path.as_deref(), Some(pick.as_str()));
+                assert_eq!(doc.info.pages.len(), 2);
+                assert_eq!(doc.password.as_deref(), Some("test-password"));
+                assert!(doc.allows_copying());
+                wait_for_export_label(&mut h);
+                h.get_by_label("Export to Text");
+            }
+        }
+    }
+    assert_eq!(std::fs::read(&path).unwrap(), bytes);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn a_tool_runs_after_conversion_but_not_after_an_open_failure() {
+    let dir = std::env::temp_dir().join(format!("pdfcraft-tool-conversion-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let text = dir.join("picked.txt");
+    let broken = dir.join("broken.pdf");
+    let missing = dir.join("missing.pdf");
+    std::fs::write(&text, b"Original synthetic conversion text").unwrap();
+    std::fs::write(&broken, b"not a PDF").unwrap();
+    for run_inline in [false, true] {
+        let mut h = tool_harness(vec![text.to_string_lossy().into_owned()], run_inline);
+        h.state_mut().run_command("export.text");
+        wait_until(&mut h, "the converted document and its requested export", |app| {
+            app.active == Some(0) && matches!(app.dialog, Some(Dialog::Export(_)))
+        });
+        assert_eq!(h.state().views.len(), 1);
+        let doc = h.state().session.get(h.state().views[0].id).unwrap();
+        assert_eq!(doc.name, "picked.pdf");
+        assert!(doc.path.is_none(), "a converted PDF is unsaved");
+        assert_eq!(doc.info.pages.len(), 1);
+        wait_for_export_label(&mut h);
+        h.get_by_label("Export to Text");
+        for path in [&broken, &missing] {
+            let name = path.file_name().unwrap().to_str().unwrap();
+            let mut h = tool_harness(vec![path.to_string_lossy().into_owned()], run_inline);
+            h.state_mut().run_command("export.text");
+            wait_until(&mut h, "the picked file's open/read failure", |app| app.toast.as_ref().is_some_and(|t| t.0.contains(name)));
+            assert!(h.state().views.is_empty() && h.state().active.is_none() && h.state().dialog.is_none());
+            assert!(h.state().password_prompt.is_none());
+            h.state_mut().open_bytes("unrelated.pdf", None, fixture(1)).unwrap();
+            h.run_steps(3);
+            assert_eq!(h.state().views.len(), 1);
+            assert_eq!(h.state().active, Some(0));
+            assert!(h.state().dialog.is_none(), "a failed open cannot defer the tool to another document");
+        }
+    }
+    assert_eq!(std::fs::read(&text).unwrap(), b"Original synthetic conversion text");
+    assert_eq!(std::fs::read(&broken).unwrap(), b"not a PDF");
+    assert!(!missing.exists());
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
 fn shortcuts_run_registered_commands() {
     let mut h = harness();
     h.key_press_modifiers(Modifiers::COMMAND, Key::D);
@@ -187,6 +403,22 @@ fn the_palette_lists_commands_with_shortcuts_and_runs_them() {
 }
 
 #[test]
+fn palette_arrow_keys_select_results_and_enter_runs_the_selection() {
+    let mut h = harness();
+    h.state_mut().set_option("palette", "rotate pages").unwrap();
+    h.run_steps(2);
+    h.get_by_label("Rotate pages clockwise");
+    h.get_by_label("Rotate pages counterclockwise");
+    h.key_press(Key::ArrowDown);
+    h.run_steps(2);
+    h.key_press(Key::Enter);
+    h.run_steps(2);
+    let app = h.state();
+    assert!(!app.palette_open);
+    assert_eq!(app.session.get(app.views[0].id).unwrap().info.pages[0].rotation, 270);
+}
+
+#[test]
 fn the_pages_menu_comes_from_the_registry() {
     let mut h = harness();
     h.get_by_label("Menu").click();
@@ -204,7 +436,8 @@ fn the_open_recent_menu_lists_files_and_opens_one() {
     let dir = std::env::temp_dir().join(format!("pdfcraft-recent-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("recent.pdf");
-    std::fs::write(&path, fixture(2)).unwrap();
+    let bytes = fixture(2);
+    std::fs::write(&path, &bytes).unwrap();
     let path = path.to_string_lossy().into_owned();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe({
         let path = path.clone();
@@ -217,6 +450,8 @@ fn the_open_recent_menu_lists_files_and_opens_one() {
         }
     });
     h.run_steps(4);
+    let original = h.state().views[0].id;
+    let original_bytes = h.state().session.get(original).unwrap().bytes.clone();
     h.get_by_label("Menu").click();
     h.run_steps(2);
     h.get_by_label("File ⏵").hover();
@@ -224,11 +459,27 @@ fn the_open_recent_menu_lists_files_and_opens_one() {
     h.get_by_label("Open Recent ⏵").hover();
     h.run_steps(3);
     h.get_by_label_contains("recent.pdf").click();
-    h.run_steps(4);
+    wait_until(&mut h, "the selected Recent file's active tab", |app| {
+        app.views.len() == 2 && app.active_ids().and_then(|(_, id)| app.session.get(id)).is_some_and(|doc| doc.path.as_deref() == Some(path.as_str()))
+    });
     let app = h.state();
     assert_eq!(app.views.len(), 2, "the recent file opened in a new tab");
     let active = app.active.unwrap();
     assert_eq!(app.session.get(app.views[active].id).and_then(|d| d.path.as_deref()), Some(path.as_str()), "the active tab is the recent file");
+    assert_eq!(active, 1);
+    let opened = app.session.get(app.views[active].id).unwrap();
+    assert_eq!(opened.name, "recent.pdf");
+    assert_eq!(opened.bytes.as_ref(), &bytes);
+    assert_eq!(opened.info.pages.len(), 2);
+    assert!(!opened.dirty);
+    assert_eq!(app.views[0].id, original);
+    let original = app.session.get(original).unwrap();
+    assert_eq!(original.name, "doc.pdf");
+    assert_eq!(original.bytes, original_bytes);
+    assert_eq!(original.info.pages.len(), 3);
+    h.run_steps(3);
+    assert_eq!(h.state().views.len(), 2, "the Recent file opens exactly once");
+    assert_eq!(std::fs::read(&path).unwrap(), bytes);
 }
 
 #[test]
@@ -311,6 +562,38 @@ fn the_shortcuts_dialog_lists_the_real_bindings() {
     h.get_by_label("Zoom in / out (also pinch or ⌘-scroll)");
 }
 
+#[test]
+fn localized_shortcuts_update_immediately_and_keep_command_ids_and_key_bindings() {
+    let mut h = harness();
+    h.ctx.set_os(OperatingSystem::Windows);
+    h.state_mut().set_option("language", "de").unwrap();
+    h.state_mut().execute("help.shortcuts");
+    h.run_steps(3);
+    h.get_by_label("Strg+Umschalt+S");
+    h.state_mut().set_option("language", "en").unwrap();
+    h.run_steps(2);
+    h.get_by_label("Ctrl+Shift+S");
+    h.state_mut().set_option("language", "de").unwrap();
+    h.ctx.set_os(OperatingSystem::Mac);
+    h.run_steps(2);
+    h.get_by_label("⇧⌘S");
+    h.key_press(Key::Escape);
+    h.run_steps(2);
+    h.ctx.set_os(OperatingSystem::Windows);
+    h.key_press_modifiers(Modifiers::CTRL | Modifiers::COMMAND, Key::K);
+    h.run_steps(3);
+    assert!(h.state().palette_open, "the localized Strg+K display still binds Ctrl+K");
+    // Searching by the stable command id still works in a translated interface.
+    h.state_mut().set_option("palette", "view.read_mode").unwrap();
+    h.run_steps(2);
+    h.key_press(Key::Enter);
+    h.run_steps(3);
+    assert_eq!(h.state().mode, pdfcraft_ui_egui::Mode::Read);
+    assert!(!h.state().palette_open);
+    let doc = h.state().session.get(h.state().views[0].id).unwrap();
+    assert!(!doc.dirty);
+}
+
 /// Menu ▸ View open, with egui told the app runs on `os`.
 fn view_menu(os: OperatingSystem) -> Harness<'static, PdfCraftApp> {
     let mut h = harness();
@@ -346,6 +629,24 @@ fn view_menu_and_tooltips_write_shortcuts_for_the_platform() {
 }
 
 #[test]
+fn the_top_bar_save_button_names_its_shortcut_not_a_milestone() {
+    // #962: on Windows the Save button's tooltip and accessibility name read "Save (M4)",
+    // an internal milestone tag, while Print and Document properties named their shortcuts.
+    let mut h = harness();
+    h.ctx.set_os(OperatingSystem::Windows);
+    h.run_steps(2);
+    h.get_by_label("Save (Ctrl+S)");
+    h.get_by_label("Print (Ctrl+P)");
+    assert_eq!(h.query_all_by_label_contains("(M4)").count(), 0, "no milestone tag in the top bar");
+    assert_eq!(h.query_all_by_label_contains("⌘").count(), 0, "no ⌘ outside macOS");
+
+    let mut h = harness();
+    h.ctx.set_os(OperatingSystem::Mac);
+    h.run_steps(2);
+    h.get_by_label("Save (⌘S)");
+}
+
+#[test]
 fn full_screen_toggles_by_shortcut_and_command_and_escape_leaves() {
     let mut h = harness();
     h.key_press_modifiers(Modifiers::COMMAND, Key::L);
@@ -368,4 +669,102 @@ fn the_about_dialog_shows_the_running_version() {
     h.state_mut().execute("help.about");
     h.run_steps(3);
     h.get_by_label_contains(&format!("Version {}", env!("CARGO_PKG_VERSION")));
+}
+
+#[test]
+fn command_w_closes_empty_macos_window_but_not_an_empty_windows_window() {
+    for (os, should_close) in [(OperatingSystem::Mac, true), (OperatingSystem::Windows, false)] {
+        let mut h = Harness::builder().with_size(egui::vec2(1000.0, 700.0)).build_eframe(|_cc| PdfCraftApp::new());
+        h.ctx.set_os(os);
+        h.run_steps(4);
+        assert!(h.state().views.is_empty());
+        h.event(egui::Event::Key { key: Key::W, physical_key: None, pressed: true, repeat: false, modifiers: Modifiers::COMMAND });
+        h.step();
+        let closes = h.output().viewport_output.values().any(|v| v.commands.iter().any(|c| matches!(c, egui::ViewportCommand::Close)));
+        assert_eq!(closes, should_close, "{os:?}: only an empty macOS window should close");
+    }
+}
+
+#[test]
+fn command_w_still_closes_the_document_tab_on_macos() {
+    let mut h = harness();
+    h.ctx.set_os(OperatingSystem::Mac);
+    h.run_steps(2);
+    h.key_press_modifiers(Modifiers::COMMAND, Key::W);
+    h.run_steps(2);
+    assert!(h.state().views.is_empty(), "⌘W closes the clean document tab");
+}
+
+fn palette_ime_output_requests_interrupt(h: &Harness<'_, PdfCraftApp>, phase: &str) -> bool {
+    assert!(h.state().palette_open, "palette closed during {phase}");
+    let ime = h.output().platform_output.ime.as_ref().expect("focused palette advertises IME");
+    eprintln!("{phase}: query={:?}; should_interrupt_composition={}", h.state().palette_query, ime.should_interrupt_composition);
+    ime.should_interrupt_composition
+}
+
+fn palette_ime_output_is_uninterrupted(h: &Harness<'_, PdfCraftApp>, phase: &str) {
+    assert!(!palette_ime_output_requests_interrupt(h, phase), "palette interrupted composition during {phase}");
+}
+
+#[test]
+fn palette_ime_idle_frames_and_reopen_do_not_interrupt_composition() {
+    let mut h = harness();
+    for opening in 0..2 {
+        h.state_mut().run_command("view.palette");
+        h.run_steps(3);
+        for frame in 0..3 {
+            h.step();
+            palette_ime_output_is_uninterrupted(&h, &format!("opening {opening}, idle {frame}"));
+        }
+        h.key_press(Key::Escape);
+        h.run_steps(2);
+        assert!(!h.state().palette_open);
+    }
+}
+
+#[test]
+fn palette_ime_chinese_preedit_commit_and_cancel_remain_uninterrupted() {
+    let mut h = harness();
+    let mut interruptions = Vec::new();
+    h.state_mut().run_command("view.palette");
+    h.run_steps(3);
+    for preedit in ["ni", "nih"] {
+        h.event(egui::Event::Ime(egui::ImeEvent::Preedit { text: preedit.into(), active_range_chars: Some(0..preedit.chars().count()) }));
+        h.step();
+        interruptions.push(palette_ime_output_requests_interrupt(&h, preedit));
+        h.step();
+        interruptions.push(palette_ime_output_requests_interrupt(&h, "preedit idle"));
+    }
+    h.event(egui::Event::Ime(egui::ImeEvent::Commit("你".into())));
+    h.step();
+    assert_eq!(h.state().palette_query, "你");
+    interruptions.push(palette_ime_output_requests_interrupt(&h, "Chinese commit"));
+    h.run_steps(2);
+    assert_eq!(h.state().palette_query, "你");
+    interruptions.push(palette_ime_output_requests_interrupt(&h, "committed idle"));
+    h.event(egui::Event::Ime(egui::ImeEvent::Preedit { text: "hao".into(), active_range_chars: Some(0..3) }));
+    h.step();
+    interruptions.push(palette_ime_output_requests_interrupt(&h, "second preedit"));
+    h.event(egui::Event::Ime(egui::ImeEvent::Preedit { text: String::new(), active_range_chars: None }));
+    h.step();
+    assert_eq!(h.state().palette_query, "你");
+    interruptions.push(palette_ime_output_requests_interrupt(&h, "cancel preedit"));
+    assert!(interruptions.iter().all(|interrupt| !interrupt), "composition interrupted: {interruptions:?}");
+}
+
+#[test]
+fn palette_ime_outside_click_closes_without_running_a_command() {
+    let mut h = harness();
+    h.state_mut().set_option("palette", "rotate pages clockwise").unwrap();
+    h.run_steps(3);
+    h.event(egui::Event::PointerButton {
+        pos: egui::pos2(20.0, 850.0),
+        button: egui::PointerButton::Primary,
+        pressed: true,
+        modifiers: Modifiers::NONE,
+    });
+    h.step();
+    assert!(!h.state().palette_open);
+    assert!(h.state().palette_query.is_empty());
+    assert_eq!(h.state().session.get(h.state().views[0].id).unwrap().info.pages[0].rotation, 0);
 }

@@ -43,7 +43,7 @@
   <key>NSRequiresAquaSystemAppearance</key>
   <false/>
   <key>NSHumanReadableCopyright</key>
-  <string>Copyright © the MIXEL Print authors. MIT OR Apache-2.0.</string>
+  <string>Copyright © the PdfCraft authors. MIT OR Apache-2.0. MIXEL Print modifications by MIXEL contributors.</string>
 
   <!-- Documents MIXEL Print opens (#73): it is offered under Open With and can be made the default
        for PDFs, without taking over from the system's viewer on install ("Alternate"). Declared by
@@ -59,6 +59,8 @@
       <string>Editor</string>
       <key>LSHandlerRank</key>
       <string>Alternate</string>
+      <key>CFBundleTypeIconFile</key>
+      <string>MIXEL Print</string>
       <key>LSItemContentTypes</key>
       <array><string>com.adobe.pdf</string></array>
       <key>CFBundleTypeExtensions</key>

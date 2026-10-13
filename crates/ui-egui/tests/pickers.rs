@@ -55,20 +55,46 @@ fn harness(docs: &[usize]) -> Harness<'static, PdfCraftApp> {
     h
 }
 
+/// A native open/password retry finishes on its worker, independently of frame count.
+fn wait_until(h: &mut Harness<'static, PdfCraftApp>, what: &str, ready: impl Fn(&PdfCraftApp) -> bool) {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
+    while !ready(h.state()) {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "timed out waiting for {what}: views={}, active={:?}, password={:?}, toast={:?}",
+            h.state().views.len(),
+            h.state().active,
+            h.state().password_prompt.as_ref().map(|p| (&p.name, &p.error)),
+            h.state().toast,
+        );
+        h.run_steps(1);
+        std::thread::sleep(std::time::Duration::from_millis(1));
+    }
+}
+
 #[test]
 fn file_open_returns_at_once_and_opens_the_pick_on_the_next_frame() {
     let dir = std::env::temp_dir().join(format!("printcraft-pickers-open-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let file = dir.join("picked.pdf");
-    std::fs::write(&file, fixture(2)).unwrap();
+    let bytes = fixture(2);
+    std::fs::write(&file, &bytes).unwrap();
 
     let mut h = harness(&[]);
     h.state_mut().pick_override = Some(vec![file.to_string_lossy().into_owned()]);
     assert!(h.state_mut().execute("file.open"));
     assert!(h.state().views.is_empty(), "the command must not wait for the picker");
-    h.run_steps(2);
+    wait_until(&mut h, "the picked document", |app| app.views.len() == 1 && app.active == Some(0));
     assert_eq!(h.state().views.len(), 1, "the picked file opens on a later frame");
     assert_eq!(pages(h.state(), 0), 2);
+    let doc = h.state().session.get(h.state().views[0].id).unwrap();
+    assert_eq!(doc.name, "picked.pdf");
+    assert_eq!(doc.path.as_deref(), Some(file.to_str().unwrap()));
+    assert_eq!(doc.bytes.as_ref(), &bytes);
+    assert!(!doc.dirty);
+    h.run_steps(2);
+    assert_eq!(h.state().views.len(), 1, "the pick opens only once");
+    assert_eq!(std::fs::read(&file).unwrap(), bytes);
     let _ = std::fs::remove_dir_all(&dir);
 }
 
@@ -621,37 +647,84 @@ fn encrypted_fixture() -> Vec<u8> {
 fn a_startup_url_does_not_replace_another_documents_password_prompt() {
     for cancel in [false, true] {
         let mut h = harness(&[]);
-        h.state_mut().open_bytes("local-encrypted.pdf", None, encrypted_fixture()).unwrap();
-        deliver_startup(&h, "late.pdf", fixture(2));
+        let local = encrypted_fixture();
+        let late = fixture(2);
+        h.state_mut().open_bytes("local-encrypted.pdf", None, local.clone()).unwrap();
+        deliver_startup(&h, "late.pdf", late.clone());
         h.run_steps(2);
-        assert_eq!(h.state().password_prompt.as_ref().unwrap().name, "local-encrypted.pdf");
+        let prompt = h.state().password_prompt.as_ref().unwrap();
+        assert_eq!(prompt.name, "local-encrypted.pdf");
+        assert!(prompt.path.is_none() && prompt.error.is_none());
+        assert_eq!(prompt.bytes.as_ref(), &local);
         assert!(h.state().views.is_empty());
         assert_eq!(h.state().startup_inbox.lock().unwrap().len(), 1, "startup bytes wait for the prompt");
+        assert_eq!(h.state().startup_inbox.lock().unwrap().as_slice(), &[("late.pdf".into(), late.clone())]);
         h.state_mut().submit_password((!cancel).then(|| "test-password".into()));
-        h.run_steps(2);
+        wait_until(&mut h, "the password response and queued startup file", |app| {
+            app.password_prompt.is_none() && app.views.len() == if cancel { 1 } else { 2 } && app.startup_inbox.lock().unwrap().is_empty()
+        });
         assert!(h.state().password_prompt.is_none());
         assert!(h.state().startup_inbox.lock().unwrap().is_empty());
         assert_eq!(h.state().active, if cancel { None } else { Some(0) });
         assert_eq!(h.state().views.len(), if cancel { 1 } else { 2 });
+        let late_index = if cancel { 0 } else { 1 };
+        if !cancel {
+            let local_doc = h.state().session.get(h.state().views[0].id).unwrap();
+            assert_eq!(local_doc.name, "local-encrypted.pdf");
+            assert_eq!(local_doc.password.as_deref(), Some("test-password"));
+            assert_eq!(local_doc.info.pages.len(), 1);
+            assert!(!local_doc.dirty);
+        }
+        let late_doc = h.state().session.get(h.state().views[late_index].id).unwrap();
+        assert_eq!(late_doc.name, "late.pdf");
+        assert_eq!(late_doc.bytes.as_ref(), &late);
+        assert_eq!(pages(h.state(), late_index), 2);
+        assert!(!late_doc.dirty);
+        h.run_steps(2);
+        assert_eq!(h.state().views.len(), if cancel { 1 } else { 2 }, "both arrivals open only once");
     }
 }
 
 #[test]
 fn unlocking_a_late_startup_url_keeps_it_in_the_background() {
     let mut h = harness(&[3]);
-    deliver_startup(&h, "late-encrypted.pdf", encrypted_fixture());
+    let active = h.state().active_ids().unwrap().1;
+    let local_bytes = h.state().session.get(active).unwrap().bytes.clone();
+    let encrypted = encrypted_fixture();
+    deliver_startup(&h, "late-encrypted.pdf", encrypted.clone());
     h.run_steps(2);
     assert_eq!(h.state().active, Some(0));
-    assert_eq!(h.state().password_prompt.as_ref().unwrap().name, "late-encrypted.pdf");
+    let prompt = h.state().password_prompt.as_ref().unwrap();
+    assert_eq!(prompt.name, "late-encrypted.pdf");
+    assert!(prompt.path.is_none() && prompt.error.is_none());
+    assert_eq!(prompt.bytes.as_ref(), &encrypted);
+    assert_eq!(h.state().views.len(), 1, "the encrypted startup file is not open yet");
     h.state_mut().submit_password(Some("wrong-password".into()));
-    h.run_steps(2);
+    wait_until(&mut h, "the late startup file's incorrect-password response", |app| app.password_prompt.as_ref().is_some_and(|p| p.error.is_some()));
     assert!(h.state().password_prompt.as_ref().unwrap().error.is_some());
+    let prompt = h.state().password_prompt.as_ref().unwrap();
+    assert_eq!(prompt.name, "late-encrypted.pdf");
+    assert!(prompt.path.is_none());
+    assert_eq!(prompt.bytes.as_ref(), &encrypted);
+    assert_eq!(prompt.error.as_deref(), Some("Incorrect password. Try again."));
     assert_eq!(h.state().active, Some(0));
+    assert_eq!(h.state().active_ids().unwrap().1, active);
+    assert_eq!(h.state().views.len(), 1, "a rejected password never opens a tab");
     h.state_mut().submit_password(Some("test-password".into()));
-    h.run_steps(2);
+    wait_until(&mut h, "the unlocked background startup file", |app| app.password_prompt.is_none() && app.views.len() == 2);
     assert!(h.state().password_prompt.is_none());
     assert_eq!(h.state().active, Some(0));
+    assert_eq!(h.state().active_ids().unwrap().1, active);
     assert_eq!(h.state().views.len(), 2);
+    let late = h.state().session.get(h.state().views[1].id).unwrap();
+    assert_eq!(late.name, "late-encrypted.pdf");
+    assert!(late.path.is_none());
+    assert_eq!(late.info.pages.len(), 1);
+    assert_eq!(late.password.as_deref(), Some("test-password"));
+    let local = h.state().session.get(active).unwrap();
+    assert_eq!(local.bytes, local_bytes);
+    assert!(!local.dirty && !late.dirty);
+    assert_eq!(pages(h.state(), 0), 3);
     h.get_by_label("late-encrypted.pdf").click();
     h.run_steps(2);
     assert_eq!(h.state().active, Some(1));
@@ -710,4 +783,83 @@ fn a_background_startup_forms_script_notice_waits_until_its_tab_is_selected() {
     h.state_mut().toast = None;
     h.run_steps(2);
     assert!(h.state().toast.is_none(), "the notice is delivered once");
+}
+
+/// Embedded bytes and the PDF's original /UF name stay independent of the Save suggestion.
+fn attachment_fixture() -> Vec<u8> {
+    let name = "invoice\u{202e}fdp.exe";
+    let uf = std::iter::once(0xfeffu16).chain(name.encode_utf16()).map(|c| format!("{c:04X}")).collect::<String>();
+    let objs = [
+        "<< /Type /Catalog /Pages 2 0 R /Names << /EmbeddedFiles << /Names [(notes.txt) 5 0 R] >> >> >>".to_string(),
+        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>".to_string(),
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Resources << >> >>".to_string(),
+        "<< /Type /EmbeddedFile /Length 11 >>\nstream\nhello notes\nendstream".to_string(),
+        format!("<< /Type /Filespec /F (notes.txt) /UF <{uf}> /EF << /F 4 0 R >> >>"),
+    ];
+    let mut out = b"%PDF-1.7\n".to_vec();
+    let mut offsets = Vec::new();
+    for (i, o) in objs.iter().enumerate() {
+        offsets.push(out.len());
+        out.extend_from_slice(format!("{} 0 obj\n{o}\nendobj\n", i + 1).as_bytes());
+    }
+    let xref = out.len();
+    out.extend_from_slice(b"xref\n0 6\n0000000000 65535 f \n");
+    for o in offsets {
+        out.extend_from_slice(format!("{o:010} 00000 n \n").as_bytes());
+    }
+    out.extend_from_slice(format!("trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n").as_bytes());
+    out
+}
+
+struct AttachmentDir(std::path::PathBuf);
+
+impl AttachmentDir {
+    fn new() -> Self {
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static NEXT: AtomicU64 = AtomicU64::new(0);
+        for _ in 0..128 {
+            let path = std::env::temp_dir().join(format!("pdfcraft-attachment-save-{}-{}", std::process::id(), NEXT.fetch_add(1, Ordering::Relaxed)));
+            match std::fs::create_dir(&path) {
+                Ok(()) => return Self(path),
+                Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                Err(error) => panic!("creating attachment Save test directory: {error}"),
+            }
+        }
+        panic!("no unused attachment Save test directory after 128 attempts");
+    }
+}
+
+impl Drop for AttachmentDir {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
+}
+
+#[test]
+fn attachment_save_preserves_bytes_metadata_and_selected_destination() {
+    let dir = AttachmentDir::new();
+    let chosen = dir.0.join("user chosen 資料.bin");
+    let original = attachment_fixture();
+    let mut h = harness(&[]);
+    h.state_mut().open_bytes("attachment.pdf", None, original.clone()).unwrap();
+    h.run_steps(2);
+    let id = h.state().views[0].id;
+    let raw_name = "invoice\u{202e}fdp.exe";
+    let index = h.state().session.get(id).unwrap().info.attachments.iter().position(|a| a.name == raw_name).unwrap();
+    h.state_mut().pick_override = Some(vec![chosen.to_string_lossy().into_owned()]);
+    h.state_mut().attachment_action(id, index, false);
+    h.run_steps(2);
+    assert_eq!(std::fs::read(&chosen).unwrap(), b"hello notes");
+    let doc = h.state().session.get(id).unwrap();
+    assert_eq!(doc.info.attachments[index].name, raw_name);
+    assert_eq!(doc.bytes.as_ref(), &original);
+    assert!(!dir.0.join("invoicefdp.exe").exists());
+    std::fs::remove_file(&chosen).unwrap();
+    h.state_mut().pick_override = Some(Vec::new());
+    h.state_mut().attachment_action(id, index, false);
+    h.run_steps(2);
+    assert_eq!(std::fs::read_dir(&dir.0).unwrap().count(), 0);
+    let doc = h.state().session.get(id).unwrap();
+    assert_eq!(doc.info.attachments[index].name, raw_name);
+    assert_eq!(doc.bytes.as_ref(), &original);
 }

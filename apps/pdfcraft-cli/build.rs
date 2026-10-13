@@ -13,9 +13,10 @@ fn main() {
         return;
     }
     let mut res = winresource::WindowsResource::new();
-    res.set("ProductName", "MIXEL Print")
+    res.set("CompanyName", "MIXEL")
+        .set("ProductName", "MIXEL Print")
         .set("FileDescription", "MIXEL Print command-line tool")
-        .set("LegalCopyright", "Copyright (c) the MIXEL Print contributors. MIT OR Apache-2.0.")
+        .set("LegalCopyright", "Copyright (c) the PdfCraft contributors. MIT OR Apache-2.0. MIXEL Print modifications by MIXEL contributors.")
         .set("OriginalFilename", "pdfcraft-cli.exe")
         .set("InternalName", "pdfcraft-cli");
     if let Err(e) = res.compile() {

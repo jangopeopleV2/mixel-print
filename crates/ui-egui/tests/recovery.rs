@@ -71,6 +71,67 @@ fn harness(s: RecoveryStore) -> Harness<'static, PdfCraftApp> {
     h
 }
 
+/// Recovery and UI password submissions prepare the PDF on a native worker.
+/// Wait for the actual state transition, giving that worker real scheduling time.
+fn wait_for_open(h: &mut Harness<'static, PdfCraftApp>, stage: &str, ready: impl Fn(&PdfCraftApp) -> bool) {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
+    loop {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "{stage}: recovery readiness timed out; tabs={}, active={:?}, password={:?}, recoverable={}, toast={:?}",
+            h.state().views.len(),
+            h.state().active,
+            h.state().password_prompt.as_ref().map(|prompt| (&prompt.name, &prompt.error)),
+            h.state().recoverable.len(),
+            h.state().toast.as_ref().map(|toast| &toast.0),
+        );
+        h.run_steps(1);
+        if ready(h.state()) {
+            return;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(1));
+    }
+}
+
+/// The prompt's first frame is egui's noninteractable Area sizing pass. A
+/// kittest click stores the current node center, so wait for the real controls
+/// to be laid out and hit-testable before queuing the single physical click.
+fn wait_for_password_cancel(h: &mut Harness<'static, PdfCraftApp>) {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
+    let id = egui::Id::new("password");
+    let layer = egui::LayerId::new(egui::Order::Foreground, id);
+    let mut previous = None;
+    loop {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "password Cancel is not ready; controls={previous:?}, area={:?}, top_modal={:?}, toast={:?}",
+            egui::AreaState::load(&h.ctx, id),
+            h.ctx.memory(egui::Memory::top_modal_layer),
+            h.state().toast.as_ref().map(|toast| &toast.0),
+        );
+        h.run_steps(1);
+        assert!(h.state().password_prompt.is_some(), "the recovery password prompt must remain until Cancel is clicked");
+        let controls = h
+            .query_by_role(Role::PasswordInput)
+            .zip(h.query_by_role_and_label(Role::Button, "Cancel"))
+            .map(|(field, cancel)| (field.rect(), cancel.rect()));
+        let hit_testable = controls.is_some_and(|(field, cancel)| {
+            egui::AreaState::load(&h.ctx, id).is_some_and(|area| {
+                area.interactable
+                    && area.rect().contains_rect(field)
+                    && area.rect().contains_rect(cancel)
+                    && h.ctx.memory(egui::Memory::top_modal_layer) == Some(layer)
+                    && h.ctx.layer_id_at(cancel.center()) == Some(layer)
+            })
+        });
+        if hit_testable && previous == controls {
+            return;
+        }
+        previous = if hit_testable { controls } else { None };
+        std::thread::sleep(std::time::Duration::from_millis(1));
+    }
+}
+
 #[test]
 fn a_crashed_session_is_offered_and_recovered_unsaved() {
     let s = store("recover");
@@ -80,7 +141,7 @@ fn a_crashed_session_is_offered_and_recovered_unsaved() {
     h.get_by_label("Recover unsaved documents?");
     h.get_by_label("work.pdf");
     h.get_by_label("Recover").click();
-    h.run_steps(4);
+    wait_for_open(&mut h, "recovered unsaved document", |app| app.views.len() == 1 && app.password_prompt.is_none());
     let app = h.state();
     assert_eq!(app.views.len(), 1);
     let doc = app.session.get(app.views[0].id).unwrap();
@@ -153,19 +214,24 @@ fn quitting_cleanly_leaves_nothing_behind() {
     assert_eq!(files_in(&s), 0);
 }
 
-#[test]
-fn encrypted_documents_are_autosaved_encrypted_and_recovered_with_the_password() {
-    let mut doc = pdfcraft_cos::Document::open(std::sync::Arc::new(fixture(2))).unwrap();
+/// `bytes` protected with an open password (AES-256).
+fn encrypted(bytes: Vec<u8>, password: &str) -> Vec<u8> {
+    let mut doc = pdfcraft_cos::Document::open(std::sync::Arc::new(bytes)).unwrap();
     doc.set_encryption(&pdfcraft_cos::NewEncryption {
         algorithm: pdfcraft_cos::Algorithm::Aes256,
-        user_password: "pw",
+        user_password: password,
         owner_password: "owner",
         permissions: -1,
         encrypt_metadata: true,
         seed: [2; 32],
     })
     .unwrap();
-    let bytes = pdfcraft_cos::write_full(&doc, &Default::default()).unwrap();
+    pdfcraft_cos::write_full(&doc, &Default::default()).unwrap()
+}
+
+#[test]
+fn encrypted_documents_are_autosaved_encrypted_and_recovered_with_the_password() {
+    let bytes = encrypted(fixture(2), "pw");
     let s = store("encrypted");
     crashed_session(&s, bytes, Some("pw"), None);
     let meta = s.list().remove(0);
@@ -175,29 +241,165 @@ fn encrypted_documents_are_autosaved_encrypted_and_recovered_with_the_password()
     let mut h = harness(s.clone());
     h.get_by_label_contains("password-protected");
     h.get_by_label("Recover").click();
-    h.run_steps(3);
+    wait_for_open(&mut h, "encrypted recovery password", |app| app.password_prompt.as_ref().is_some_and(|prompt| prompt.name == "work.pdf"));
+    assert!(h.state().views.is_empty(), "encrypted recovery opens no tab before its password");
     let field = h.get_by_role(Role::PasswordInput);
     field.focus();
     field.type_text("pw");
     h.run_steps(2);
     h.key_press(Key::Enter);
-    h.run_steps(4);
+    wait_for_open(&mut h, "unlocked encrypted recovery", |app| app.views.len() == 1 && app.password_prompt.is_none());
     let app = h.state();
     assert_eq!(app.views.len(), 1);
     let d = app.session.get(app.views[0].id).unwrap();
     assert!(d.dirty);
+    assert!(d.info.encrypted, "recovery retains the document's encryption");
     assert_eq!(d.info.pages.len(), 1);
     let _ = Modifiers::NONE;
 }
 
+/// #813: cancelling the password prompt of a recovered snapshot must not hand its path and
+/// recovery entry to the next encrypted document that is unlocked (Save would then overwrite
+/// the snapshot's original file and delete the snapshot).
 #[test]
-fn incomplete_entries_are_ignored_and_cleaned_up() {
+fn a_cancelled_recovery_password_does_not_attach_to_the_next_unlocked_document() {
+    let s = store("cancelled");
+    crashed_session(&s, encrypted(fixture(2), "pw-a"), Some("pw-a"), Some("/docs/A.pdf"));
+    assert_eq!(s.list().len(), 1);
+    let mut h = harness(s.clone());
+    h.get_by_label("Recover").click();
+    wait_for_open(&mut h, "recovery password before cancel", |app| app.password_prompt.as_ref().is_some_and(|prompt| prompt.name == "work.pdf"));
+    assert!(h.state().password_prompt.is_some(), "the snapshot asks for its password");
+    wait_for_password_cancel(&mut h);
+    h.get_by_role_and_label(Role::Button, "Cancel").click();
+    wait_for_open(&mut h, "cancelled recovery password", |app| app.password_prompt.is_none());
+    assert!(h.state().password_prompt.is_none());
+    assert!(h.state().views.is_empty());
+
+    let app = h.state_mut();
+    app.open_bytes("B.pdf", Some("/docs/B.pdf".into()), encrypted(fixture(1), "pw-b")).unwrap();
+    app.submit_password(Some("pw-b".into()));
+    wait_for_open(&mut h, "independently unlocked document B", |app| app.views.len() == 1 && app.password_prompt.is_none());
+    let app = h.state();
+    assert_eq!(app.views.len(), 1);
+    let b = app.session.get(app.views[0].id).unwrap();
+    assert_eq!(b.path.as_deref(), Some("/docs/B.pdf"), "B keeps its own path");
+    assert!(!b.dirty, "B is clean: it is not the recovered document");
+    assert!(b.info.encrypted, "B keeps its own encryption");
+    assert_eq!(s.list().len(), 1, "A's snapshot is still in the store");
+    assert_eq!(app.recoverable.len(), 1, "and on offer again");
+
+    // Closing B (clean, so no prompt) must not remove A's snapshot either.
+    h.state_mut().execute("file.close");
+    h.run_steps(3);
+    assert!(h.state().views.is_empty());
+    assert_eq!(s.list().len(), 1, "A's snapshot survives closing B");
+}
+
+#[test]
+fn incomplete_entries_are_preserved_until_explicitly_discarded() {
     let s = store("partial");
     std::fs::create_dir_all(s.dir()).unwrap();
-    std::fs::write(s.dir().join("orphan.pdf"), b"%PDF-1.7").unwrap();
+    let bytes = fixture(1);
+    std::fs::write(s.dir().join("orphan.pdf"), &bytes).unwrap();
     std::fs::write(s.dir().join("broken.json"), b"{ not json").unwrap();
-    assert!(s.list().is_empty());
-    assert_eq!(files_in(&s), 0);
+    for _ in 0..2 {
+        let entries = s.list();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].key, "orphan");
+        assert_eq!(entries[0].path, None);
+        assert_eq!(s.read("orphan").unwrap(), bytes);
+        assert_eq!(files_in(&s), 2, "listing must not remove any recovery files");
+    }
+    s.clear();
+    assert!(!s.dir().join("orphan.pdf").exists());
+    assert_eq!(files_in(&s), 0, "metadata without a snapshot holds no work and is cleared too");
+}
+
+#[test]
+fn a_failed_metadata_write_keeps_the_completed_snapshot_recoverable() {
+    let s = store("metadata-write-failure");
+    let meta = pdfcraft_ui_egui::RecoveryMeta {
+        key: "snapshot".into(),
+        name: "work.pdf".into(),
+        path: Some("original.pdf".into()),
+        saved_at: 1,
+        encrypted: false,
+    };
+    // A directory at the sidecar path makes its atomic rename fail after the PDF was written.
+    std::fs::create_dir_all(s.dir().join("snapshot.json")).unwrap();
+    let bytes = fixture(2);
+    assert!(s.write(&meta, &bytes).is_err());
+    assert_eq!(s.read("snapshot").unwrap(), bytes);
+    let entries = s.list();
+    assert_eq!(s.read("snapshot").unwrap(), bytes, "a failed sidecar write must not lose the PDF");
+    assert_eq!(entries.len(), 1);
+    assert_eq!(entries[0].key, "snapshot");
+    assert_eq!(entries[0].path, None, "an unknown original path must require Save As");
+}
+
+#[test]
+fn missing_corrupt_or_mismatched_metadata_recovers_the_snapshot_without_an_original_path() {
+    for case in ["missing", "corrupt", "mismatched"] {
+        let s = store(case);
+        crashed_session(&s, fixture(3), None, Some("original.pdf"));
+        let mut meta = s.list().remove(0);
+        let saved = s.read(&meta.key).unwrap();
+        let sidecar = s.dir().join(format!("{}.json", meta.key));
+        match case {
+            "missing" => std::fs::remove_file(&sidecar).unwrap(),
+            "corrupt" => std::fs::write(&sidecar, b"{ not json").unwrap(),
+            _ => {
+                meta.key = "other-snapshot".into();
+                std::fs::write(&sidecar, serde_json::to_vec(&meta).unwrap()).unwrap();
+            }
+        }
+        let mut h = harness(s.clone());
+        h.get_by_label("Recover").click();
+        wait_for_open(&mut h, case, |app| app.views.len() == 1 && app.password_prompt.is_none());
+        let app = h.state();
+        assert_eq!(app.views.len(), 1, "{case}");
+        let doc = app.session.get(app.views[0].id).unwrap();
+        assert!(doc.dirty);
+        assert_eq!(doc.path, None);
+        assert_eq!(doc.info.pages.len(), 2, "the edit survived missing metadata: {case}");
+        let recovered = s.list();
+        assert_eq!(recovered.len(), 1);
+        assert_eq!(s.read(&recovered[0].key).unwrap(), saved);
+        // The damaged sidecar was replaced with metadata for the recovered snapshot.
+        let sidecar: pdfcraft_ui_egui::RecoveryMeta = serde_json::from_slice(&std::fs::read(&sidecar).unwrap()).unwrap();
+        assert_eq!((sidecar.key.as_str(), sidecar.path.as_deref()), (recovered[0].key.as_str(), None), "{case}");
+    }
+}
+
+#[test]
+fn an_encrypted_snapshot_without_metadata_still_requires_its_password() {
+    let s = store("encrypted-orphan");
+    crashed_session(&s, encrypted(fixture(2), "pw"), Some("pw"), Some("original.pdf"));
+    let meta = s.list().remove(0);
+    let saved = s.read(&meta.key).unwrap();
+    std::fs::remove_file(s.dir().join(format!("{}.json", meta.key))).unwrap();
+    let mut h = harness(s.clone());
+    h.get_by_label("Recover").click();
+    wait_for_open(&mut h, "orphan snapshot password", |app| app.password_prompt.is_some());
+    assert!(h.state().views.is_empty());
+    let field = h.get_by_role(Role::PasswordInput);
+    field.focus();
+    field.type_text("pw");
+    h.run_steps(2);
+    h.key_press(Key::Enter);
+    wait_for_open(&mut h, "unlocked orphan snapshot", |app| app.views.len() == 1 && app.password_prompt.is_none());
+    let app = h.state();
+    assert_eq!(app.views.len(), 1);
+    let doc = app.session.get(app.views[0].id).unwrap();
+    assert!(doc.dirty);
+    assert!(doc.info.encrypted, "the orphan snapshot remains encrypted after recovery");
+    assert_eq!(doc.path, None);
+    assert_eq!(doc.info.pages.len(), 1);
+    assert_eq!(s.read(&meta.key).unwrap(), saved, "recovery must not rewrite encrypted bytes");
+    let sidecar: pdfcraft_ui_egui::RecoveryMeta =
+        serde_json::from_slice(&std::fs::read(s.dir().join(format!("{}.json", meta.key))).unwrap()).unwrap();
+    assert!(sidecar.encrypted, "the replacement metadata records that the snapshot is encrypted");
 }
 
 /// Through the control channel, the reply to a click comes after the click's effects: state read
