@@ -2,6 +2,7 @@
 
 **Stage: alpha** · next: beta, ~26% (ready for real work 49% → 75%) and ~400–700 h away
 
+> **Last reviewed:** 2026-10-14 · **Last updated:** 2026-10-14 · **Change:** minor (M14: Mac App Store sandbox variant and local distribution packaging; parity and estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
 > **Last reviewed:** 2026-10-12 · **Last updated:** 2026-10-12 · **Change:** minor (M7 #1316: replacing a line keeps a neighbouring line whose glyph box overlaps; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
 > **Last reviewed:** 2026-10-12 · **Last updated:** 2026-10-12 · **Change:** minor (M1 #1339: an unchanged incremental save of a classic cross-reference table writes a zero-length subsection; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
 > **Last reviewed:** 2026-10-12 · **Last updated:** 2026-10-12 · **Change:** minor (M14 Windows low-DPI font-hinting candidate measured on macOS; no Windows runtime claim; estimates unchanged) · **Target:** Adobe Acrobat Pro (Acrobat DC, continuous track 26.002.21931, macOS)
@@ -142,6 +143,7 @@ Ranked; detail and the full milestone table in [docs/roadmap.md](docs/roadmap.md
 
 ## Progress log
 
+- **2026-10-14 (M14, macOS Mac App Store variant):** Implemented the `mac-app-store` variant with verified Foundation container paths, security-scoped bookmarks, parented native file sheets, Foundation atomic saves and disabled MAS listeners. Local Apple Distribution app and Installer-signed package assembly is implemented and has been verified; actual signed production-library save/reopen and workspace/About rendering have been exercised. Distributed desktop launch and TestFlight installation remain separate observations; internal delivery status is recorded in the suite `STATUS.md`. Broad parity and estimates unchanged.
 - **2026-10-12 (M7, #1316):** Replacing a line or paragraph no longer removes a distinct neighbour whose glyph box overlaps the edited line. A second drawing is removed only when it also sits on the same baseline, so fake-bold and invisible copies still go. Synthetic regressions cover 6 pt leading, the same word on the next line, ordinary spacing, a separate paragraph, same-position copies, and incremental and full save/reopen. Estimates unchanged.
 - **2026-10-12 (M1, #1339):** An incremental save of an unchanged classic-table file used to append `xref` and then `trailer` with no subsection, which qpdf reports as a damaged file. The section now has a zero-length subsection, so no object entry changes and a trailer-only edit is still written. Estimates unchanged.
 - **2026-10-12 (M12, auto-tag preview):** The engine and `accessibility_autotag_preview` propose paragraph and large-heading roles for bounded text blocks on one page, with locations and reasons. Every proposal needs review; images remain unclassified. No PDF tags are written yet. Synthetic tool tests cover normal text, a larger heading, bounds and unchanged source bytes. Estimates unchanged.
