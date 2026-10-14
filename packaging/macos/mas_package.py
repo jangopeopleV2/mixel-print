@@ -520,7 +520,7 @@ def verify_app(app, entitlement_value, cert_sha1, work, label):
     actual = plistlib.loads(raw)
     require(actual == entitlement_value, "Actual code entitlements differ from the exact MAS policy")
     prefix = work / f"{label}-certificate-"
-    run([TOOLS["codesign"], "--display", "--extract-certificates", str(prefix), str(app)], log=work / f"{label}-certificate.log")
+    run([TOOLS["codesign"], "--display", f"--extract-certificates={prefix}", str(app)], log=work / f"{label}-certificate.log")
     certificate = Path(str(prefix) + "0")
     file_proof(certificate)
     require(hashlib.sha1(certificate.read_bytes()).hexdigest() == cert_sha1.lower(), "Final app was signed by another certificate")
