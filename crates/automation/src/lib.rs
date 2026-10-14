@@ -150,7 +150,7 @@ impl Automation {
     /// given, so `/dev/stdout` and the like still work. Returns where the file went.
     pub fn write_output(&self, path: &str, bytes: &[u8]) -> Result<PathBuf> {
         let target = self.resolve(path, true)?;
-        if self.root.is_some() {
+        if self.root.is_some() || pdfcraft_platform::macos_mas::enabled() {
             write_atomic(&target, bytes)?;
         } else {
             std::fs::write(&target, bytes).map_err(|e| failed(format!("{path}: {e}")))?;
@@ -2301,7 +2301,17 @@ fn unused(dir: &Path, stem: &str) -> PathBuf {
 }
 
 /// Write via a temporary file in the same directory, then rename over the target.
+/// The App Store build publishes through Foundation without assuming a parent-folder grant.
 fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
+    #[cfg(all(target_os = "macos", feature = "mac-app-store"))]
+    if pdfcraft_platform::macos_mas::enabled() {
+        let target = pdfcraft_platform::macos_mas::resolve(path).map_err(failed)?;
+        let actual = pdfcraft_platform::macos_atomic::write(&target, bytes).map_err(|e| failed(format!("{}: {e}", target.display())))?;
+        if let Err(error) = pdfcraft_platform::macos_mas::after_write(&actual) {
+            pdfcraft_platform::macos_mas::notice(format!("File was saved, but future access could not be retained: {error}"));
+        }
+        return Ok(());
+    }
     write_atomic_with(path, bytes, staging_suffixes())
 }
 

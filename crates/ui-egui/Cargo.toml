@@ -9,6 +9,10 @@ rust-version = "1.95"
 [lints]
 workspace = true
 
+[features]
+default = []
+mac-app-store = ["pdfcraft-platform/mac-app-store"]
+
 [dependencies]
 craft-ui = { workspace = true }
 pdfcraft-fonts = { workspace = true }

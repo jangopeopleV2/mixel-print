@@ -73,6 +73,9 @@ fn safe_name(s: &str) -> String {
 /// could plant a link or a folder of their own.
 #[cfg(not(target_arch = "wasm32"))]
 fn clipboard_dir() -> Option<std::path::PathBuf> {
+    if crate::macos_mas::enabled() {
+        return crate::macos_mas::cache_dir("MIXEL Print").map(|p| p.join("Clipboard"));
+    }
     use std::path::PathBuf;
     if let Some(dir) = crate::portable::data_dir() {
         return Some(dir.join("Clipboard"));

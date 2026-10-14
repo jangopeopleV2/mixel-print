@@ -37,7 +37,13 @@ impl AppleEvents {
                 .drain()
                 .into_iter()
                 .map(|e| match e {
-                    Event::Open(paths) => OsEvent::Open(paths.into_iter().map(|p| p.to_string_lossy().into_owned()).collect()),
+                    Event::Open(paths) => OsEvent::Open(
+                        paths
+                            .into_iter()
+                            .filter_map(|p| pdfcraft_ui_egui::macos_mas::picked(p, false))
+                            .map(|p| p.to_string_lossy().into_owned())
+                            .collect(),
+                    ),
                     Event::Quit => OsEvent::Quit,
                 })
                 .collect()

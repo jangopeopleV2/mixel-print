@@ -30,6 +30,13 @@ impl LastSession {
     /// Read what [`PdfCraftApp::persist`] wrote. Malformed entries are skipped and the list is
     /// capped at [`MAX_FILES`].
     pub(crate) fn from_json(v: &serde_json::Value) -> Self {
+        let mut v = v.clone();
+        let _ = crate::macos_mas::resolve_params(&mut v);
+        if let Some(path) = v.get("active").and_then(serde_json::Value::as_str)
+            && let Ok(path) = crate::macos_mas::resolve(path)
+        {
+            v["active"] = serde_json::Value::String(path.to_string_lossy().into_owned());
+        }
         let files = v["files"]
             .as_array()
             .map(|files| {

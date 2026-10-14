@@ -76,6 +76,7 @@ impl PinnedFolders {
         let Some(items) = value.as_array() else { return };
         let mut folders = Vec::new();
         for folder in items.iter().filter_map(serde_json::Value::as_str).filter_map(clean) {
+            let folder = crate::macos_mas::resolve(&folder).map(|p| p.to_string_lossy().into_owned()).unwrap_or(folder);
             if folders.len() >= MAX_PINNED {
                 break;
             }

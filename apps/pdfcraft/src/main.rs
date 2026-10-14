@@ -60,6 +60,9 @@ const LEGACY_STORAGE_KEY: &str = "printcraft";
 /// it is `PdfCraftData` beside the executable (#157). eframe would otherwise derive it from the
 /// app id; keep it under "MIXEL Print".
 fn settings_dir() -> Option<std::path::PathBuf> {
+    if pdfcraft_ui_egui::macos_mas::enabled() {
+        return pdfcraft_ui_egui::macos_mas::container_dir("MIXEL Print");
+    }
     if let Some(dir) = pdfcraft_ui_egui::portable::data_dir() {
         return Some(dir.to_path_buf());
     }
@@ -71,6 +74,9 @@ fn settings_dir() -> Option<std::path::PathBuf> {
 /// folder is left alone when the new one already exists or the move fails. A portable copy leaves
 /// the per-user folders alone.
 fn migrate_legacy_folders() {
+    if pdfcraft_ui_egui::macos_mas::enabled() {
+        return;
+    }
     if pdfcraft_ui_egui::portable::data_dir().is_some() {
         return;
     }
@@ -197,6 +203,20 @@ fn main() -> eframe::Result {
             _ => files.push(path_from_arg(a)),
         }
     }
+    // Restore document and folder grants before even probing startup/recent paths.
+    for error in pdfcraft_ui_egui::macos_mas::initialize("MIXEL Print") {
+        log::warn!("{error}");
+    }
+    if pdfcraft_ui_egui::macos_mas::enabled() && pdfcraft_ui_egui::macos_mas::container_dir("MIXEL Print").is_none() {
+        return Err(eframe::Error::AppCreation("Launch the signed MIXEL Print App Store application bundle to use its private container".into()));
+    }
+    if pdfcraft_ui_egui::macos_mas::enabled() && control_file.take().is_some() {
+        log::warn!("The control server is unavailable in the Mac App Store build.");
+    }
+    let files = files
+        .into_iter()
+        .filter_map(|p| pdfcraft_ui_egui::macos_mas::picked(std::path::Path::new(&p), false).map(|p| p.to_string_lossy().into_owned()))
+        .collect();
     let files = rejoin_split_paths(files, |p| std::path::Path::new(p).is_file());
     let integrated = cfg!(target_os = "macos");
     migrate_legacy_folders();

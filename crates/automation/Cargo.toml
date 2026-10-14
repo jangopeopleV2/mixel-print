@@ -22,6 +22,7 @@ base64 = { version = "0.22", optional = true }
 
 
 [features]
+mac-app-store = ["pdfcraft-platform/mac-app-store"]
 default = ["mcp"]
 # The MCP server module. Opt-in at run time either way; disable to leave it out of the build.
 mcp = ["dep:base64"]

@@ -45,6 +45,9 @@ impl RecoveryStore {
     /// (macOS), `%LOCALAPPDATA%\MIXEL Print\Recovery` (Windows), or
     /// `$XDG_DATA_HOME/pdfcraft/recovery` / `~/.local/share/pdfcraft/recovery` (others).
     pub fn default_dir() -> Option<PathBuf> {
+        if crate::macos_mas::enabled() {
+            return crate::macos_mas::container_dir("MIXEL Print").map(|p| p.join("Recovery"));
+        }
         if let Some(dir) = crate::portable::data_dir() {
             return Some(dir.join("Recovery"));
         }

@@ -49,6 +49,9 @@ impl std::fmt::Display for Unwritable {
 pub fn current() -> &'static Portable {
     static CURRENT: OnceLock<Portable> = OnceLock::new();
     CURRENT.get_or_init(|| {
+        if crate::macos_mas::enabled() {
+            return Portable::default();
+        }
         let exe = std::env::current_exe().ok();
         let portable = resolve(exe.as_deref().and_then(Path::parent));
         if let Some(dir) = &portable.dir {

@@ -3,5 +3,10 @@
 
 #![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable)]
 
+pub mod macos_mas;
+
+#[cfg(all(target_os = "macos", feature = "mac-app-store"))]
+pub mod macos_atomic;
+
 pub mod desktop_theme;
 pub mod staging;

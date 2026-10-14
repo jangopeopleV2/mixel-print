@@ -22,6 +22,8 @@ macro_rules! tl_ctx {
     };
 }
 
+pub use pdfcraft_platform::macos_mas;
+
 mod a11y_ui;
 mod actions_ui;
 mod appearance;
@@ -1625,6 +1627,15 @@ impl PdfCraftApp {
 
     #[cfg(not(target_arch = "wasm32"))]
     fn open_path_then(&mut self, path: &str, then: Option<&'static str>) {
+        let resolved = match crate::macos_mas::resolve(path) {
+            Ok(path) => path,
+            Err(error) => {
+                self.notify_tr(&error);
+                return;
+            }
+        };
+        let path = resolved.to_string_lossy();
+        let path = path.as_ref();
         let name = std::path::Path::new(path).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| path.to_string());
         // Taken before reading: a build that rewrites the file meanwhile still counts as a change.
         let stamp = file_watch::Stamp::at(path);
@@ -2100,7 +2111,20 @@ impl PdfCraftApp {
         if let Ok(r) = serde_json::from_value::<Vec<RecentFile>>(v["recent"].clone()) {
             // Only keep entries whose files still exist.
             #[cfg(not(target_arch = "wasm32"))]
-            let r: Vec<RecentFile> = r.into_iter().filter(|f| std::path::Path::new(&f.path).exists()).collect();
+            let r: Vec<RecentFile> = r
+                .into_iter()
+                .filter_map(|mut f| {
+                    if crate::macos_mas::enabled() {
+                        if let Ok(path) = crate::macos_mas::resolve(&f.path) {
+                            f.path = path.to_string_lossy().into_owned();
+                        }
+                        // A missing/denied external drive must remain available for reauthorization.
+                        Some(f)
+                    } else {
+                        std::path::Path::new(&f.path).exists().then_some(f)
+                    }
+                })
+                .collect();
             self.recent = r;
         }
         if let Some(on) = v["reopen_last_session"].as_bool() {
@@ -2670,6 +2694,9 @@ impl eframe::App for PdfCraftApp {
     }
 
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        for error in crate::macos_mas::poll() {
+            self.notify_tr(&error);
+        }
         self.ctx = Some(ctx.clone());
         self.dialog_epoch();
         // Notices raised outside `ui` (opened files, OS events, the control channel) translate too.
@@ -2717,6 +2744,22 @@ impl eframe::App for PdfCraftApp {
         #[cfg(target_arch = "wasm32")]
         self.process_signature_images();
         let dropped = ctx.input(|i| i.raw.dropped_files.clone());
+        #[cfg(not(target_arch = "wasm32"))]
+        let dropped = dropped
+            .into_iter()
+            .filter(|file| {
+                if !file.path().is_absolute() {
+                    return true;
+                }
+                match crate::macos_mas::selected(file.path(), false) {
+                    Ok(_) => true,
+                    Err(error) => {
+                        self.notify_tr(&error);
+                        false
+                    }
+                }
+            })
+            .collect();
         #[cfg(not(target_arch = "wasm32"))]
         let dropped = self.drop_on_signature_pad(dropped);
         #[cfg(not(target_arch = "wasm32"))]

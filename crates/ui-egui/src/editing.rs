@@ -655,6 +655,15 @@ impl PdfCraftApp {
     /// Write document `id` to `dest` and make it the document's file. Returns `true` if written.
     #[cfg(not(target_arch = "wasm32"))]
     fn save_doc_to(&mut self, id: pdfcraft_engine::DocId, dest: &str) -> bool {
+        let resolved = match crate::macos_mas::resolve(dest) {
+            Ok(path) => path,
+            Err(error) => {
+                self.notify_tr(&error);
+                return false;
+            }
+        };
+        let dest = resolved.to_string_lossy();
+        let dest = dest.as_ref();
         // Save As answers on a later frame: commit what was typed meanwhile, too (#166), even
         // if another tab is active by then.
         if !self.commit_typing_in(id) || !self.flatten_fill_sign_for_save(id) {
@@ -918,8 +927,24 @@ pub(crate) fn is_mail_temp_copy(path: &str) -> bool {
 
 /// Write via a temporary file in the same directory and rename over the target, so a crash or
 /// full disk never leaves a half-written PDF where the original was.
+/// The App Store build uses Foundation's OS-granted replacement directory for file-only grants.
 pub fn write_atomically(path: &str, bytes: &[u8]) -> std::io::Result<()> {
-    write_atomically_with(path, bytes, staging_suffixes())
+    #[cfg(all(target_os = "macos", feature = "mac-app-store"))]
+    if crate::macos_mas::enabled() {
+        let target = crate::macos_mas::resolve(path).map_err(std::io::Error::other)?;
+        let actual = pdfcraft_platform::macos_atomic::write(&target, bytes)?;
+        if let Err(error) = crate::macos_mas::after_write(&actual) {
+            log::warn!("File was saved, but future access could not be retained: {error}");
+        }
+        return Ok(());
+    }
+    let result = write_atomically_with(path, bytes, staging_suffixes());
+    if result.is_ok()
+        && let Err(error) = crate::macos_mas::after_write(path)
+    {
+        log::warn!("File was saved, but future access could not be retained: {error}");
+    }
+    result
 }
 
 /// [`write_atomically`], trying the staging names that `suffixes` give.

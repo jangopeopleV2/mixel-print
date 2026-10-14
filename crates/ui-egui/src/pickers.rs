@@ -180,26 +180,26 @@ impl PdfCraftApp {
         }
         // On macOS creating the future shows the panel; it must happen here, on the main thread.
         let ctx = self.ctx.clone();
-        let one = |h: Option<rfd::FileHandle>| h.map(|h| h.path().to_path_buf()).into_iter().collect::<Vec<_>>();
+        let one = |h: Option<rfd::FileHandle>, save| h.and_then(|h| crate::macos_mas::picked(h.path(), save)).into_iter().collect::<Vec<_>>();
         let started = match ask {
             Ask::File(d) => {
                 let pick = d.pick_file();
-                self.pickers.spawn(target, ctx, async move { one(pick.await) }, then)
+                self.pickers.spawn(target, ctx, async move { one(pick.await, false) }, then)
             }
             Ask::Folder(d) => {
                 let pick = d.pick_folder();
-                self.pickers.spawn(target, ctx, async move { one(pick.await) }, then)
+                self.pickers.spawn(target, ctx, async move { one(pick.await, false) }, then)
             }
             Ask::Save(d) => {
                 let pick = d.save_file();
-                self.pickers.spawn(target, ctx, async move { one(pick.await) }, then)
+                self.pickers.spawn(target, ctx, async move { one(pick.await, true) }, then)
             }
             Ask::Files(d) => {
                 let pick = d.pick_files();
                 self.pickers.spawn(
                     target,
                     ctx,
-                    async move { pick.await.unwrap_or_default().into_iter().map(|h| h.path().to_path_buf()).collect() },
+                    async move { pick.await.unwrap_or_default().into_iter().filter_map(|h| crate::macos_mas::picked(h.path(), false)).collect() },
                     then,
                 )
             }
