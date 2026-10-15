@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Regenerate the app icons from assets/app-icon/pdfcraft.svg and the Windows PDF file icon
-# from assets/app-icon/pdfcraft-document.svg. Both are master vectors.
+# Regenerate app icons from pdfcraft.svg: supplied PNG brand plus editable vector overlays.
+# The separate Windows PDF file icon, pdfcraft-document.svg, remains its unchanged master vector.
 #
 # Needs: resvg (brew install resvg / cargo install resvg) and python3 (stdlib only, for the .ico).
 # On macOS, iconutil also writes the .icns. The outputs are committed, so building and packaging
@@ -18,7 +18,7 @@ trap 'rm -rf "$TMP"' EXIT
 
 command -v resvg >/dev/null || { echo "error: resvg not found (brew install resvg)" >&2; exit 1; }
 
-# The master is a full-bleed 512 tile (rx=112): right for Windows and Linux. macOS icons follow
+# The hybrid app composition is a full-bleed 512 tile (rx=104): right for Windows and Linux. macOS follows
 # Apple's grid instead: an 824 px body centred on a transparent 1024 canvas.
 MAC="$TMP/macos.svg"
 {

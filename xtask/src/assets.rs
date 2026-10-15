@@ -41,6 +41,27 @@ pub const ALLOWED_LICENCES: &[&str] = &[
 /// (AGENTS.md §1.2).
 pub const BRAND_LICENCE: &str = "LicenseRef-Storyteller-Trademark";
 
+/// Owner-authorized supplied MIXEL app-icon compositions only (AGENTS.md §1.2).
+/// Keep this separate from the global open-licence allowlist and ArtCraft terms.
+pub const MIXEL_BRAND_LICENCE: &str = "LicenseRef-MIXEL-Brand";
+pub const MIXEL_BRAND_LICENCE_FILE: &str = "assets/app-icon/LICENSE-MIXEL-brand.txt";
+const MIXEL_BRAND_ICON_PATHS: &[&str] = &[
+    "assets/app-icon/pdfcraft.svg",
+    "assets/app-icon/pdfcraft-small.svg",
+    "assets/app-icon/pdfcraft-1024.png",
+    "assets/app-icon/pdfcraft.icns",
+    "assets/app-icon/pdfcraft.ico",
+    "assets/app-icon/hicolor/16x16/apps/ch.mixel.print.png",
+    "assets/app-icon/hicolor/24x24/apps/ch.mixel.print.png",
+    "assets/app-icon/hicolor/32x32/apps/ch.mixel.print.png",
+    "assets/app-icon/hicolor/48x48/apps/ch.mixel.print.png",
+    "assets/app-icon/hicolor/64x64/apps/ch.mixel.print.png",
+    "assets/app-icon/hicolor/128x128/apps/ch.mixel.print.png",
+    "assets/app-icon/hicolor/256x256/apps/ch.mixel.print.png",
+    "assets/app-icon/hicolor/512x512/apps/ch.mixel.print.png",
+    "assets/app-icon/hicolor/scalable/apps/ch.mixel.print.svg",
+];
+
 pub const ADOBE_DATA_ALLOWED: &[(&str, &str)] = &[("hayro-cmap", "assets/cmaps.brotli"), ("hayro-interpret", "src/font/generated/metrics.rs")];
 
 /// First-party files on that same closed list: generated tables of Adobe-authored non-visual
@@ -242,7 +263,11 @@ pub fn check(root: &Path, m: &Manifest, repo_files: &[String], lock: &BTreeSet<(
             problems.push(format!("{}: listed twice", a.path));
         }
         let brand = a.licence == BRAND_LICENCE && a.kind == "logo" && a.path.starts_with("docs/brand/");
-        if !brand {
+        let mixel_brand = a.licence == MIXEL_BRAND_LICENCE
+            && a.kind == "icon"
+            && a.licence_file == MIXEL_BRAND_LICENCE_FILE
+            && MIXEL_BRAND_ICON_PATHS.contains(&a.path.as_str());
+        if !(brand || mixel_brand) {
             licence_ok(&a.path, &a.licence, &mut problems);
         }
         if !root.join(&a.licence_file).is_file() {
@@ -563,6 +588,63 @@ mod tests {
             let p = check(&root, &m, &[], &BTreeSet::new());
             assert_eq!(p.iter().all(|p| !p.contains("allowlist")), pass, "{path} {kind}: {p:?}");
         }
+    }
+
+    #[test]
+    fn mixel_brand_licence_is_limited_to_exact_app_icon_assets() {
+        let root = super::root();
+        assert!(!ALLOWED_LICENCES.contains(&MIXEL_BRAND_LICENCE));
+        assert_eq!(MIXEL_BRAND_ICON_PATHS.len(), 14);
+        assert_eq!(MIXEL_BRAND_ICON_PATHS.iter().copied().collect::<BTreeSet<_>>().len(), 14);
+        let make = |path: &str| {
+            let mut a = asset(path, "MIXEL (user-supplied brand)", "icon", MIXEL_BRAND_LICENCE);
+            a.licence_file = MIXEL_BRAND_LICENCE_FILE.into();
+            a
+        };
+        for path in MIXEL_BRAND_ICON_PATHS {
+            let m = Manifest { asset: vec![make(path)], ..Default::default() };
+            let p = check(&root, &m, &[], &BTreeSet::new());
+            assert!(p.is_empty(), "{path}: {p:?}");
+        }
+        for path in [
+            "assets/app-icon/unlisted.svg",
+            "assets/app-icon/pdfcraft-document.svg",
+            "assets/app-icon/pdfcraft-document.ico",
+            "assets/app-icon/../app-icon/pdfcraft.svg",
+            "assets/app-icon/pdfcraft.svg.unlisted.svg",
+            "docs/brand/mixel.svg",
+        ] {
+            let m = Manifest { asset: vec![make(path)], ..Default::default() };
+            let p = check(&root, &m, &[], &BTreeSet::new());
+            assert!(p.iter().any(|p| p.contains("not on the allowlist")), "{path}: {p:?}");
+        }
+        for (kind, licence_file, licence) in [
+            ("logo", MIXEL_BRAND_LICENCE_FILE, MIXEL_BRAND_LICENCE),
+            ("image", MIXEL_BRAND_LICENCE_FILE, MIXEL_BRAND_LICENCE),
+            ("icon", "assets/app-icon/LICENSE.txt", MIXEL_BRAND_LICENCE),
+            ("icon", "docs/brand/LICENSE-brand.txt", MIXEL_BRAND_LICENCE),
+            ("icon", "assets/app-icon/./LICENSE-MIXEL-brand.txt", MIXEL_BRAND_LICENCE),
+            ("icon", MIXEL_BRAND_LICENCE_FILE, "LicenseRef-MIXEL-Brand OR MIT"),
+            ("icon", MIXEL_BRAND_LICENCE_FILE, BRAND_LICENCE),
+        ] {
+            let mut a = make("assets/app-icon/pdfcraft.svg");
+            a.kind = kind.into();
+            a.licence_file = licence_file.into();
+            a.licence = licence.into();
+            let m = Manifest { asset: vec![a], ..Default::default() };
+            let p = check(&root, &m, &[], &BTreeSet::new());
+            assert!(p.iter().any(|p| p.contains("not on the allowlist")), "{kind} {licence_file} {licence}: {p:?}");
+        }
+        let mut changed_hash = make("assets/app-icon/pdfcraft.svg");
+        changed_hash.sha256 = "0".repeat(64);
+        let m = Manifest { asset: vec![changed_hash], ..Default::default() };
+        let p = check(&root, &m, &[], &BTreeSet::new());
+        assert!(p.iter().any(|p| p.contains("SHA-256 does not match")), "{p:?}");
+        let mut forbidden_source = make("assets/app-icon/pdfcraft.svg");
+        forbidden_source.author = "Adobe".into();
+        let m = Manifest { asset: vec![forbidden_source], ..Default::default() };
+        let p = check(&root, &m, &[], &BTreeSet::new());
+        assert!(p.iter().any(|p| p.contains("from Adobe is forbidden")), "{p:?}");
     }
 
     #[test]
