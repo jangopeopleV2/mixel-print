@@ -83,3 +83,9 @@ No dump of Acrobat's menu tree has been diffed against the registry yet (gap 24)
 |---|---|---|
 | 2026-10-11 | minor | Column select shipped (#740, PR #765); several objects move together on one page (#844, PR #907); Shift-⌘-G goes back (#810, PR #835) |
 | 2026-10-10 | major | Created from the command registry, automation tools, the View area of the checklist and open UI issues |
+
+## MIXEL resource branding (product-specific)
+
+Source update 2026-10-19: company links use **MIXEL Website** / **MIXEL Creative Apps** and `https://www.mixel.ch`. Existing MIXEL Print project/repository links remain unchanged. Upstream Discord UI, actions and locale keys are removed; no replacement Discord server is claimed. Active resource IDs: `help.website`, `help.app_page`, `help.github`.
+
+This supplemental product-branding record is outside the Adobe feature comparison; scores and generated parity rows are unchanged. Matching source regressions are proposed, with build/test/native click verification pending application of this patch. Existing privacy, author, licence and third-party credit records remain applicable.

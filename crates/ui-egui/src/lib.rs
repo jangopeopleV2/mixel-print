@@ -388,6 +388,12 @@ pub enum OsEvent {
 /// Returns the [`OsEvent`]s that arrived since it was last called (set by the desktop app).
 pub type OsEventsFn = Box<dyn FnMut() -> Vec<OsEvent>>;
 
+/// Authorizes an absolute file path delivered by a trusted native host as a drop.
+/// Success retains the original dropped handle and path. Without a host callback,
+/// the signed app's normal App Store file-access policy applies.
+#[cfg(not(target_arch = "wasm32"))]
+pub type DropAccessFn = Box<dyn FnMut(&std::path::Path) -> Result<(), String>>;
+
 /// Hands a saved PDF to the page embedding MIXEL Print (web): `(name, bytes, save_as)`. `save_as`
 /// is `true` for Save As. Set by the web app when a host page (such as a Nextcloud app) asked
 /// for saves; without it the browser downloads the file.
@@ -592,6 +598,10 @@ pub struct PdfCraftApp {
     pub unsaved_flag: std::sync::Arc<std::sync::atomic::AtomicBool>,
     /// Requests from the operating system, polled every frame (macOS Apple events).
     pub os_events: Option<OsEventsFn>,
+    /// Trusted native host authorization for dropped paths (see DropAccessFn).
+    /// None uses macos_mas::selected; document data and automation cannot set it.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub native_drop_access: Option<DropAccessFn>,
     /// Save delivers to the embedding page instead of downloading (web, see [`HostSaveFn`]).
     pub host_save: Option<HostSaveFn>,
     /// Reports unsaved work to the embedding page (web, see [`HostDirtyFn`]).
@@ -914,6 +924,8 @@ impl PdfCraftApp {
             failed_inbox: Default::default(),
             unsaved_flag: Default::default(),
             os_events: None,
+            #[cfg(not(target_arch = "wasm32"))]
+            native_drop_access: None,
             host_save: None,
             host_dirty: None,
             close_request: None,
@@ -2751,8 +2763,13 @@ impl eframe::App for PdfCraftApp {
                 if !file.path().is_absolute() {
                     return true;
                 }
-                match crate::macos_mas::selected(file.path(), false) {
-                    Ok(_) => true,
+                let access = if let Some(authorize) = &mut self.native_drop_access {
+                    authorize(file.path())
+                } else {
+                    crate::macos_mas::selected(file.path(), false).map(|_| ())
+                };
+                match access {
+                    Ok(()) => true,
                     Err(error) => {
                         self.notify_tr(&error);
                         false

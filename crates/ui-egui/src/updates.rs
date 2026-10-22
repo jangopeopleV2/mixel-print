@@ -4,6 +4,7 @@
 //! network code; without a source (the web build, tests) the command opens the releases page.
 //! MIXEL Print never downloads or installs anything itself: the user downloads the new version.
 //! It asks only when the user does: there is no check at start (the owner's decision).
+//! The Mac App Store build disables this command and receives updates through the store.
 
 use std::sync::Arc;
 
@@ -63,9 +64,17 @@ pub(crate) struct Updates {
     pub(crate) open: bool,
 }
 
+/// External release checks are unavailable in the Mac App Store distribution.
+pub(crate) const fn external_updates_allowed() -> bool {
+    !cfg!(all(target_os = "macos", feature = "mac-app-store"))
+}
+
 impl PdfCraftApp {
     /// Help ▸ Check for updates: ask for the latest release and show the outcome.
     pub fn check_for_updates(&mut self) {
+        if !external_updates_allowed() {
+            return;
+        }
         let Some(source) = self.update_source.clone() else {
             self.open_url(RELEASES_PAGE);
             return;
@@ -192,5 +201,56 @@ pub(crate) fn dialog(app: &mut PdfCraftApp, ctx: &egui::Context) {
         if let Some(url) = download {
             app.open_url(&url);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(all(target_os = "macos", feature = "mac-app-store"))]
+    #[test]
+    fn mas_updates_never_call_a_source_or_open_external_releases() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        let called = Arc::new(AtomicUsize::new(0));
+        let observed = Arc::clone(&called);
+        let mut app = PdfCraftApp::new();
+        app.update_source = Some(Arc::new(move || {
+            observed.fetch_add(1, Ordering::SeqCst);
+            Ok(Release { version: "v999.0.0".into(), url: RELEASES_PAGE.into() })
+        }));
+        let spec = pdfcraft_engine::commands::command("help.check_updates").unwrap();
+        assert!(!app.command_enabled(spec));
+        assert!(!app.execute("help.check_updates"));
+        app.check_for_updates();
+        assert_eq!(called.load(Ordering::SeqCst), 0);
+        assert!(!app.updates.open);
+        assert!(matches!(app.updates.check, Check::Idle));
+        assert!(app.last_opened_url.is_none());
+        app.update_source = None;
+        app.check_for_updates();
+        assert!(app.last_opened_url.is_none(), "a missing source must not fall back to GitHub in MAS builds");
+    }
+
+    #[cfg(all(not(target_arch = "wasm32"), not(all(target_os = "macos", feature = "mac-app-store"))))]
+    #[test]
+    fn ordinary_update_command_still_runs_the_supplied_source() {
+        let release = Release { version: "v999.0.0".into(), url: format!("{RELEASES_PAGE}/tag/v999.0.0") };
+        let answer = release.clone();
+        let mut app = PdfCraftApp::new();
+        app.update_source = Some(Arc::new(move || Ok(answer.clone())));
+        assert!(app.execute("help.check_updates"));
+        assert!(app.updates.open);
+        let Check::Running(received) = &app.updates.check else { panic!("the supplied update source must run") };
+        assert_eq!(received.recv_timeout(std::time::Duration::from_secs(2)).unwrap().unwrap(), release);
+        assert!(app.last_opened_url.is_none(), "checking does not itself open a download page");
+    }
+
+    #[cfg(not(all(target_os = "macos", feature = "mac-app-store")))]
+    #[test]
+    fn ordinary_update_command_keeps_the_release_page_fallback() {
+        let mut app = PdfCraftApp::new();
+        assert!(app.execute("help.check_updates"));
+        assert_eq!(app.last_opened_url.as_deref(), Some(RELEASES_PAGE));
     }
 }

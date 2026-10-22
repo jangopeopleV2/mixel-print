@@ -1,5 +1,4 @@
-//! Community links: the Discord button is one click away everywhere; Help menu, About dialog and
-//! home screen open the ArtCraft and MIXEL Print pages.
+//! Owned MIXEL company and Print project links in the title bar, Help, About and Home.
 
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
@@ -18,25 +17,25 @@ fn harness(setup: impl FnOnce(&mut PdfCraftApp) + 'static) -> Harness<'static, P
 }
 
 #[test]
-fn discord_button_in_the_top_bar_opens_discord() {
+fn website_button_in_the_top_bar_opens_mixel() {
     let mut h = harness(|_| {});
-    h.get_by_label("Discord").click();
+    h.query_all_by_label("MIXEL Website").next().unwrap().click();
     h.run_steps(2);
-    assert_eq!(h.state().last_opened_url.as_deref(), Some(links::DISCORD));
-    assert_eq!(links::DISCORD, "https://discord.gg/artcraft");
+    assert_eq!(h.state().last_opened_url.as_deref(), Some(links::WEBSITE));
+    assert_eq!(links::WEBSITE, "https://www.mixel.ch");
 }
 
 #[test]
 fn home_screen_links() {
     for (label, url) in [
-        ("Join our Discord", links::DISCORD),
         ("MIXEL Print web page", "https://github.com/jangopeopleV2/mixel-print"),
         ("MIXEL Print on GitHub", "https://github.com/jangopeopleV2/mixel-print"),
-        ("ArtCraft website", "https://getartcraft.com"),
+        ("MIXEL Website", "https://www.mixel.ch"),
     ] {
         let mut h = harness(|_| {});
-        h.get_by_label("Join the ArtCraft community");
-        h.get_by_label(label).click();
+        h.get_by_label("MIXEL Creative Apps");
+        // Home follows the topbar in the accessibility tree; both website controls share a URL.
+        h.query_all_by_label(label).last().unwrap().click();
         h.run_steps(2);
         assert_eq!(h.state().last_opened_url.as_deref(), Some(url), "{label}");
     }
@@ -51,11 +50,14 @@ fn about_dialog_shows_the_brand_and_links() {
         app.dialog = Some(Dialog::About);
     });
     h.get_by_label("MIXEL");
-    h.get_by_label("Based on pdfcraft by the ArtCraft team.");
-    assert_eq!(h.query_all_by_label("ArtCraft").count(), 0, "ArtCraft artwork must not identify the MIXEL fork");
-    h.get_by_label("Join our Discord").click();
+    assert_eq!(h.query_all_by_label("Discord").count(), 0, "No unowned community control is shown");
+    // The titlebar is drawn before the modal and remains in the accessibility tree.
+    // Require both controls, then exercise the About link that follows the titlebar.
+    let websites: Vec<_> = h.query_all_by_label("MIXEL Website").collect();
+    assert_eq!(websites.len(), 2, "The titlebar and About each expose their company link");
+    websites.last().unwrap().click();
     h.run_steps(2);
-    assert_eq!(h.state().last_opened_url.as_deref(), Some(links::DISCORD));
+    assert_eq!(h.state().last_opened_url.as_deref(), Some(links::WEBSITE));
 }
 
 #[test]

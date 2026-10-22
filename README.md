@@ -1,9 +1,9 @@
 <!-- MIXEL-HEADER -->
 # MIXEL Print
 
-**MIXEL Print** is part of the MIXEL creative suite: an open-source, pure-Rust alternative to Adobe Acrobat Pro for macOS, Windows, Linux and the web.
+**MIXEL Print** is part of [MIXEL Creative Apps](https://www.mixel.ch).
 
-Maintained by [MIXEL](https://mixel.ch). Based on [storytold/pdfcraft](https://github.com/storytold/pdfcraft) from the ArtCraft Crafting Apps by Brandon Thomas; licensed under Apache-2.0 / MIT (see `LICENSE-APACHE`, `LICENSE-MIT`, `NOTICE`). Upstream changes are merged from the `upstream` remote and re-branded with `rebrand.sh`.
+Maintained by [MIXEL](https://www.mixel.ch). Based on [storytold/pdfcraft](https://github.com/storytold/pdfcraft) by Brandon Thomas; licensed under Apache-2.0 / MIT (see `LICENSE-APACHE`, `LICENSE-MIT`, `NOTICE`). Upstream changes are merged from the `upstream` remote and re-branded with `rebrand.sh`.
 
 ---
 
@@ -22,14 +22,11 @@ Maintained by [MIXEL](https://mixel.ch). Based on [storytold/pdfcraft](https://g
   <img alt="No account, no telemetry" src="https://img.shields.io/badge/no%20account-no%20telemetry-0a7563">
 </p>
 
-<p align="center">
-  <a href="https://discord.gg/artcraft"><img alt="Join the ArtCraft community on Discord" src="https://img.shields.io/badge/Join%20us%20on%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" height="40"></a>
-</p>
 
 <p align="center">
   <a href="https://github.com/jangopeopleV2/mixel-print"><b>MIXEL Print project page</b></a> ·
-  <a href="https://getartcraft.com/">ArtCraft</a> ·
-  <a href="https://getartcraft.com/apps">All Crafting Apps</a>
+  <a href="https://www.mixel.ch">MIXEL Website</a> ·
+  <a href="https://www.mixel.ch">MIXEL Creative Apps</a>
 </p>
 
 <br>
@@ -40,9 +37,6 @@ Maintained by [MIXEL](https://mixel.ch). Based on [storytold/pdfcraft](https://g
   <sub>The MIXEL Print Showcase, a 13-page specimen PDF, open with the All tools panel and threaded comments.</sub>
 </p>
 
-> [!NOTE]
-> **ArtCraft is a community of artists from all walks of life.** Digital, generative, music,
-> games &mdash; if you make things, you're one of us. **[Come say hi on Discord](https://discord.gg/artcraft).**
 
 <p align="center">
   <a href="#highlights">Highlights</a> ·
@@ -58,20 +52,16 @@ Maintained by [MIXEL](https://mixel.ch). Based on [storytold/pdfcraft](https://g
   <a href="#get-started">Get started</a> ·
   <a href="#whats-next">What's next</a> ·
   <a href="#downloads">Downloads</a> ·
-  <a href="#the-crafting-apps">Crafting Apps</a>
+  <a href="#mixel-creative-apps">MIXEL Creative Apps</a>
 </p>
 
 ---
 
-## Community
+## MIXEL resources
 
-MIXEL Print is based on pdfcraft by the [ArtCraft](https://getartcraft.com) team. The upstream community remains available for discussion:
-
-- **Discord: [discord.gg/artcraft](https://discord.gg/artcraft)**. This is the fastest way to get help and share feedback. The app has a Discord button in its title bar.
-- **Web page:** [github.com/jangopeopleV2/mixel-print](https://github.com/jangopeopleV2/mixel-print)
-- **Source:** [github.com/storytold/pdfcraft](https://github.com/storytold/pdfcraft)
-
-MIXEL uses its original code-drawn M. Historical ArtCraft trademark files and notices are retained only as upstream provenance; their restrictions remain in [`docs/brand/LICENSE-brand.txt`](docs/brand/LICENSE-brand.txt).
+- [MIXEL Website](https://www.mixel.ch)
+- [MIXEL Print project page](https://github.com/jangopeopleV2/mixel-print)
+- Upstream authors and open-source notices remain in [NOTICE](NOTICE).
 
 ## Highlights
 
@@ -431,7 +421,7 @@ The summary is in **[ROADMAP.md](ROADMAP.md)**; the full assessment by dimension
 
 ## Downloads
 
-**New to MIXEL Print?** Download it from the [MIXEL Print page on getartcraft.com](https://github.com/jangopeopleV2/mixel-print). That's the easiest way to install it.
+**New to MIXEL Print?** Download it from the [MIXEL Print project page](https://github.com/jangopeopleV2/mixel-print). That's the easiest way to install it.
 
 **Want a specific build or format?** On GitHub, the [latest release](https://github.com/storytold/pdfcraft/releases/latest) has every build listed below, and [all releases](https://github.com/storytold/pdfcraft/releases) has earlier versions and their notes. `<ver>` in the file names is the version number, and `SHA256SUMS.txt` lists a checksum for every file.
 
@@ -498,47 +488,9 @@ Every other Linux build needs glibc 2.35 or newer (Ubuntu 22.04+, Debian 12+, Fe
 
 ---
 
-## The Crafting Apps
+## MIXEL Creative Apps
 
-MIXEL Print is one of the **Crafting Apps**: free, open-source creative tools from the
-[ArtCraft](https://getartcraft.com/) team, each written from scratch in Rust and each able to
-stand on its own.
-
-| | App | What it's for | Code | Learn more |
-|:-:|---|---|---|---|
-| <img src="https://raw.githubusercontent.com/storytold/photocraft/main/assets/app-icon/hicolor/64x64/apps/ch.mixel.photo.png" alt="" width="32" height="32"> | **MIXEL Photo** | Image editing: layers, masks, type and real PSD files | [GitHub](https://github.com/storytold/photocraft) | [Website](https://getartcraft.com/apps/photocraft) |
-| <img src="https://raw.githubusercontent.com/storytold/vectorcraft/main/assets/app-icon/hicolor/64x64/apps/ch.mixel.vector.png" alt="" width="32" height="32"> | **MIXEL Vector** | Vector illustration | [GitHub](https://github.com/storytold/vectorcraft) | [Website](https://getartcraft.com/apps/vectorcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/filmcraft/main/assets/app-icon/hicolor/64x64/apps/ch.mixel.film.png" alt="" width="32" height="32"> | **MIXEL Film** | Video editing, color and sound | [GitHub](https://github.com/storytold/filmcraft) | [Website](https://getartcraft.com/apps/filmcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/lightcraft/main/assets/app-icon/hicolor/64x64/apps/ch.mixel.light.png" alt="" width="32" height="32"> | **MIXEL Light** | Photo library and raw development | [GitHub](https://github.com/storytold/lightcraft) | [Website](https://getartcraft.com/apps/lightcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/pdfcraft/main/assets/app-icon/hicolor/64x64/apps/ch.mixel.print.png" alt="" width="32" height="32"> | **MIXEL Print** | **Reading, organizing and protecting PDFs · you are here** | [GitHub](https://github.com/storytold/pdfcraft) | [Website](https://github.com/jangopeopleV2/mixel-print) |
-| <img src="https://raw.githubusercontent.com/storytold/effectcraft/main/assets/app-icon/hicolor/64x64/apps/ch.mixel.effects.png" alt="" width="32" height="32"> | **MIXEL Effects** | Motion graphics and visual effects | [GitHub](https://github.com/storytold/effectcraft) | [Website](https://getartcraft.com/apps/effectcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/designcraft/main/assets/app-icon/hicolor/64x64/apps/ch.mixel.design.png" alt="" width="32" height="32"> | **MIXEL Design** | Page layout and publishing | [GitHub](https://github.com/storytold/designcraft) | [Website](https://getartcraft.com/apps/designcraft) |
-
-And [**ArtCraft**](https://getartcraft.com/) itself, our AI image and video studio for artists who want real control.
-
-<br>
-
-<p align="center">
-  <a href="https://discord.gg/artcraft"><img alt="Join the ArtCraft community on Discord" src="https://img.shields.io/badge/Join%20us%20on%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" height="40"></a>
-</p>
-
-<h3 align="center">Come make things with us</h3>
-
-<p align="center">
-  Our Discord is where artists of every kind hang out: people who paint, shoot, draw, cut film,
-  set type, and people still figuring out what they like to make. Share what you're working on,
-  ask for help, tell us what's broken, or tell us what you wish these tools could do.
-  Whatever your medium and however long you've been at it, you're welcome here.
-</p>
-
-<p align="center">
-  <a href="https://discord.gg/artcraft"><b>discord.gg/artcraft</b></a> ·
-  <a href="https://getartcraft.com/">getartcraft.com</a> ·
-  <a href="https://getartcraft.com/apps">The Crafting Apps</a> ·
-  <a href="https://github.com/jangopeopleV2/mixel-print">MIXEL Print</a>
-</p>
-
----
+Explore [MIXEL Creative Apps](https://www.mixel.ch).
 
 ## License and credits
 
@@ -559,7 +511,7 @@ in its runtime identity or README. Plain-text ArtCraft credits acknowledge the u
 <sub>Adobe, Photoshop, Illustrator, Premiere Pro, Lightroom, Acrobat, After Effects and InDesign are trademarks or registered trademarks of Adobe Inc. in the United States and/or other countries. MIXEL Print is an independent, open-source project and is not affiliated with, sponsored by or endorsed by Adobe Inc.; these names are used only to describe the workflows it is compatible with.</sub>
 
 <p align="center">
-  <sub>Based on <a href="https://github.com/storytold/pdfcraft">pdfcraft</a> by the <a href="https://getartcraft.com/">ArtCraft</a> team and community. Maintained by MIXEL.</sub>
+  <sub>Based on <a href="https://github.com/storytold/pdfcraft">pdfcraft</a> by the <a href="https://www.mixel.ch">MIXEL Website</a> team and community. Maintained by MIXEL.</sub>
 </p>
 
 Tools and Inspector panels can be dragged into tab groups, split beside the PDF, or floated within the app window. Read and full-screen modes keep their existing focused document view. Drag a panel header to a target edge or another header. Its context menu offers Float panel, Move to group, and Close panel. Existing panel toggles reopen panels at their saved location; Reset Panel Layout restores the app layout. Floating panels remain inside the current app window.

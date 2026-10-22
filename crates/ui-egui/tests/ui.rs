@@ -328,8 +328,8 @@ fn tabs_shrink_to_fit_then_arrows_step_through_them_and_open_stays_in_sight() {
         }
     });
     let open = h.get_by_label("Open").rect();
-    let discord = h.get_by_label("Discord").rect();
-    assert!(open.right() <= discord.left(), "Open {open:?} must not run under Discord {discord:?}");
+    let website = h.get_by_label("MIXEL Website").rect();
+    assert!(open.right() <= website.left(), "Open {open:?} must not run under MIXEL Website {website:?}");
     let mut previous_right = f32::MIN;
     for i in 0..5 {
         let tab = h.get_by_label(&name(i)).rect();
@@ -353,15 +353,15 @@ fn tabs_shrink_to_fit_then_arrows_step_through_them_and_open_stays_in_sight() {
     assert_eq!(enabled(&h, "Scroll tabs right"), Some(true), "and then there is more to the right");
     let open = h.get_by_label("Open").rect();
     let right = h.get_by_label("Scroll tabs right").rect();
-    assert!(right.right() <= open.left() + 0.5 && open.right() <= h.get_by_label("Discord").rect().left());
-    // Twenty: Open stays in sight left of Discord.
+    assert!(right.right() <= open.left() + 0.5 && open.right() <= h.get_by_label("MIXEL Website").rect().left());
+    // Twenty: Open stays in sight left of MIXEL Website.
     for i in 0..13 {
         h.state_mut().open_bytes(&format!("more-{i:02}.pdf"), None, FIXTURE.to_vec()).unwrap();
     }
     h.run_steps(4);
     let open = h.get_by_label("Open").rect();
-    let discord = h.get_by_label("Discord").rect();
-    assert!(open.left() > 0.0 && open.right() <= discord.left(), "Open {open:?} stays in sight left of Discord {discord:?}");
+    let website = h.get_by_label("MIXEL Website").rect();
+    assert!(open.left() > 0.0 && open.right() <= website.left(), "Open {open:?} stays in sight left of MIXEL Website {website:?}");
 }
 
 /// macOS (#789): with the integrated title bar, the strip is the 28 pt band AppKit centres the
@@ -374,7 +374,7 @@ fn the_integrated_title_bar_is_the_traffic_light_band() {
         app.open_bytes("band.pdf", None, FIXTURE.to_vec()).unwrap();
     });
     let band = 28.0;
-    for label in ["Home", "band.pdf", "Open", "Discord", "Keyboard shortcuts"] {
+    for label in ["Home", "band.pdf", "Open", "MIXEL Website", "Keyboard shortcuts"] {
         let r = h.get_by_label(label).rect();
         assert!(r.top() >= 0.0 && r.bottom() <= band, "{label}: {r:?} inside the {band} pt title bar");
         assert!(r.height() >= 24.0, "{label}: {r:?} stays clickable");
@@ -396,11 +396,11 @@ fn narrow_tab_strips_accept_vertical_wheel_scrolling() {
             app
         });
         h.run_steps(4);
-        let last = h.get_by_label("narrow-11.pdf").rect();
+        let last = h.get_by_role_and_label(egui::accesskit::Role::Tab, "narrow-11.pdf").rect();
         assert!(last.center().x > 28.0 && last.right() < width - 100.0, "active tab: {last:?}");
         h.state_mut().active = Some(0);
         h.run_steps(4);
-        let first = h.get_by_label("narrow-00.pdf").rect();
+        let first = h.get_by_role_and_label(egui::accesskit::Role::Tab, "narrow-00.pdf").rect();
         assert!(first.center().x > 28.0 && first.right() < width - 100.0);
         h.event(egui::Event::PointerMoved(first.center()));
         for _ in 0..8 {
@@ -412,9 +412,9 @@ fn narrow_tab_strips_accept_vertical_wheel_scrolling() {
             });
             h.run_steps(8);
         }
-        let last = h.get_by_label("narrow-11.pdf").rect();
+        let last = h.get_by_role_and_label(egui::accesskit::Role::Tab, "narrow-11.pdf").rect();
         assert!(last.center().x > 28.0 && last.right() < width - 100.0, "scrolled tab: {last:?}");
-        h.get_by_label("narrow-11.pdf").click();
+        h.get_by_role_and_label(egui::accesskit::Role::Tab, "narrow-11.pdf").click();
         h.run_steps(4);
         assert_eq!(h.state().active, Some(11));
         assert!(h.get_by_label_contains("Display theme:").rect().right() <= width);
@@ -670,6 +670,27 @@ impl egui::DroppedFile for Dropped {
     }
 }
 
+type DropAccessCalls = std::sync::Arc<std::sync::Mutex<Vec<std::path::PathBuf>>>;
+
+/// A native test host grants only its own existing on-disk fixture.
+fn grant_fixture_drop(app: &mut PdfCraftApp, path: &std::path::Path) -> DropAccessCalls {
+    assert!(path.is_absolute() && path.exists());
+    let expected = path.to_path_buf();
+    let calls = DropAccessCalls::default();
+    let observed = calls.clone();
+    app.native_drop_access = Some(Box::new(move |path| {
+        if path != expected.as_path() {
+            return Err("The native test host did not authorize this fixture path".into());
+        }
+        observed.lock().unwrap().push(path.to_path_buf());
+        Ok(())
+    }));
+    let ungranted = path.with_extension("not-granted");
+    assert!(app.native_drop_access.as_mut().unwrap()(&ungranted).is_err());
+    assert!(calls.lock().unwrap().is_empty(), "an ungranted path is not authorized or recorded");
+    calls
+}
+
 #[test]
 fn dropping_a_pdf_on_the_window_opens_it() {
     let mut h = Harness::builder().with_size(egui::vec2(1200.0, 800.0)).build_eframe(|_cc| {
@@ -724,6 +745,16 @@ fn a_file_dropped_on_the_page_grid_is_read_from_disk_and_inserted() {
         app.session.get(app.views[0].id).unwrap().info.pages.len()
     };
     assert_eq!(pages(&h), 1);
+    #[cfg(all(target_os = "macos", feature = "mac-app-store"))]
+    {
+        assert!(h.state().native_drop_access.is_none());
+        let denied: egui::DroppedFileHandle = std::sync::Arc::new(Dropped { path: path.clone(), bytes: Vec::new() });
+        h.input_mut().dropped_files.push(denied);
+        h.run_steps(3);
+        assert_eq!(h.state().toast.as_ref().map(|(message, _)| message.as_str()), Some("App Store file access has not been initialized"));
+        assert_eq!(pages(&h), 1, "the default MAS policy rejects an uninitialized absolute drop");
+    }
+    let drop_calls = grant_fixture_drop(h.state_mut(), &path);
     let file: egui::DroppedFileHandle = std::sync::Arc::new(Dropped { path: path.clone(), bytes: Vec::new() });
     h.input_mut().dropped_files.push(file);
     for _ in 0..300 {
@@ -734,6 +765,7 @@ fn a_file_dropped_on_the_page_grid_is_read_from_disk_and_inserted() {
         std::thread::sleep(std::time::Duration::from_millis(10));
     }
     assert_eq!(pages(&h), 2, "the dropped file's page is inserted at the end of the grid");
+    assert_eq!(drop_calls.lock().unwrap().as_slice(), std::slice::from_ref(&path));
     let _ = std::fs::remove_dir_all(&dir);
 }
 
@@ -751,6 +783,7 @@ fn pdfs_dropped_on_the_combine_tab_join_its_list() {
     // An absolute path is read from disk, with its modified time.
     let path = std::env::temp_dir().join(format!("pdfcraft-combine-drop-{}.pdf", std::process::id()));
     std::fs::write(&path, FIXTURE).unwrap();
+    let drop_calls = grant_fixture_drop(h.state_mut(), &path);
     let on_disk: egui::DroppedFileHandle = std::sync::Arc::new(Dropped { path: path.clone(), bytes: Vec::new() });
     let in_memory: egui::DroppedFileHandle = std::sync::Arc::new(Dropped { path: "second.pdf".into(), bytes: FIXTURE.to_vec() });
     h.input_mut().dropped_files.extend([on_disk, in_memory]);
@@ -760,6 +793,7 @@ fn pdfs_dropped_on_the_combine_tab_join_its_list() {
     assert!(app.views.is_empty(), "nothing opens");
     assert_eq!(app.combine_draft.len(), 2);
     assert!(app.combine_draft[0].modified.is_some() && app.combine_draft[1].modified.is_none());
+    assert_eq!(drop_calls.lock().unwrap().as_slice(), std::slice::from_ref(&path));
     h.get_by_label("just now");
 }
 
@@ -778,12 +812,14 @@ fn a_folder_dropped_on_the_combine_tab_adds_its_pdfs() {
     h.run_steps(3);
     h.state_mut().execute("page.combine");
     h.run_steps(2);
+    let drop_calls = grant_fixture_drop(h.state_mut(), &dir);
     let folder: egui::DroppedFileHandle = std::sync::Arc::new(Dropped { path: dir.clone(), bytes: Vec::new() });
     h.input_mut().dropped_files.push(folder);
     h.run_steps(3);
     let _ = std::fs::remove_dir_all(&dir);
     let names: Vec<_> = h.state().combine_draft.iter().map(|f| f.name.clone()).collect();
     assert_eq!(names, ["two.pdf", "one.pdf"], "subfolders included, in path order");
+    assert_eq!(drop_calls.lock().unwrap().as_slice(), std::slice::from_ref(&dir));
 }
 
 #[test]

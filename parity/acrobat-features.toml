@@ -1734,6 +1734,18 @@ evidence = ["crates/ui-egui/tests/commands.rs::the_about_dialog_shows_the_runnin
 notes = ""
 
 [[feature]]
+id = "view.privacy-policy"
+title = "Privacy Policy link in About"
+area = "B"
+tier = "N/A"
+milestone = "M14"
+status = "partial"
+commands = ["help.about"]
+tools = []
+evidence = []
+notes = "MIXEL product-specific legal disclosure, outside Acrobat feature parity (tier N/A is excluded from parity percentages). MIXEL Print's About dialog contains a Privacy Policy link to https://www.mixel.ch/legal/craft/privacy/; clicking the link calls the existing app.open_url path (crates/ui-egui/src/dialogs.rs). This is an About-dialog link, not a standalone native-menu item. The About command opens the containing dialog; a dedicated privacy-link automation action, feature-specific passing test and native browser-launch verification are not recorded here, so this entry is partial rather than shipped."
+
+[[feature]]
 id = "view.check-for-updates"
 title = "Help ▸ Check for updates"
 area = "B"
@@ -10118,3 +10130,15 @@ commands = []
 tools = []
 evidence = []
 notes = ""
+
+[[feature]]
+id = "view.mixel-resource-links"
+title = "MIXEL website and project resource links"
+area = "B"
+tier = "N/A"
+milestone = "M14"
+status = "partial"
+commands = ["help.website", "help.app_page", "help.github"]
+tools = []
+evidence = []
+notes = "MIXEL product-specific resource controls, outside Acrobat parity. The company website is https://www.mixel.ch; existing Print project/source URLs are retained. The upstream community action is removed from the command registry and all UI/CLI surfaces. Source-linked tests are proposed in crates/ui-egui/tests/ui_group/links.rs; dedicated passing test/native browser evidence must be recorded after verification, so this row remains partial and does not change counted parity percentages."

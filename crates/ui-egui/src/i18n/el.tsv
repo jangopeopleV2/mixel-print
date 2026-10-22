@@ -78,7 +78,6 @@
 	Side panels	Πλευρικοί πίνακες
 	Enable Acrobat JavaScript	Ενεργοποίηση Acrobat JavaScript
 	OK	Εντάξει
-	Join our Discord	Ελάτε στο Discord μας
 	Close	Κλείσιμο
 	Next / previous match	Επόμενο / προηγούμενο αποτέλεσμα
 	Copy selected text	Αντιγραφή επιλεγμένου κειμένου
@@ -139,8 +138,7 @@
 	Previous page	Προηγούμενη σελίδα
 	Welcome to MIXEL Print	Καλώς ορίσατε στο MIXEL Print
 	An open-source PDF workbench — local, private, and scriptable.	Ένα εργαλείο PDF ανοιχτού κώδικα — τοπικό, ιδιωτικό και αυτοματοποιήσιμο.
-	Join the ArtCraft community	Γίνετε μέλος της κοινότητας ArtCraft
-	Get help, share feedback and follow development on Discord.	Βρείτε βοήθεια, μοιραστείτε σχόλια και παρακολουθήστε την ανάπτυξη στο Discord.
+	MIXEL Creative Apps	Δημιουργικές εφαρμογές MIXEL
 	Recommended tools	Προτεινόμενα εργαλεία
 	Use now	Χρήση τώρα
 	Open file	Άνοιγμα αρχείου
@@ -1661,10 +1659,9 @@
 	Extract pages…	Εξαγωγή σελίδων…
 	Split document…	Διαχωρισμός εγγράφου…
 	Number pages…	Αρίθμηση σελίδων…
-	Join the ArtCraft Discord	Συμμετοχή στο Discord του ArtCraft
 	MIXEL Print web page	Ιστότοπος του MIXEL Print
 	MIXEL Print on GitHub	MIXEL Print στο GitHub
-	ArtCraft website	Ιστότοπος ArtCraft
+	MIXEL Website	Ιστότοπος MIXEL
 	Check for updates…	Έλεγχος για ενημερώσεις…
 	Export a PDF	Εξαγωγή PDF
 	Export to	Εξαγωγή σε
@@ -2350,3 +2347,5 @@ animation effects	Off	Ανενεργά
 	This form's scripts are turned off because one ran too long. Reopen the document to run them again.	Τα σενάρια αυτής της φόρμας είναι απενεργοποιημένα, επειδή ένα από αυτά εκτελούνταν για πολύ ώρα. Ανοίξτε ξανά το έγγραφο για να εκτελεστούν ξανά.
 	Move tag earlier	Μετακίνηση ετικέτας νωρίτερα
 	Move tag later	Μετακίνηση ετικέτας αργότερα
+	Privacy Policy	Πολιτική απορρήτου
+	Product links, source code and updates from MIXEL.	Σύνδεσμοι προϊόντων, πηγαίος κώδικας και ενημερώσεις από το MIXEL.

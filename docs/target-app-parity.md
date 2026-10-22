@@ -303,3 +303,9 @@ licensed OCR or AI model.
 | 2026-10-10 | major | Created from ROADMAP.md §Estimate summary and §Honest assessment (2026-10-05/07). Full re-measure against Acrobat Pro 26.002.21931: checklist recomputed (56.9% unweighted, ≈ 67% tier-weighted), ready for real work ≈ 40%, stage alpha, hours re-calibrated (780–1,400 h to parity, 400–700 h to beta), dimension and area tables |
 | 2026-10-07 | minor | (in ROADMAP.md) 806 tracked features, 51.0% shipped, effort-weighted ≈ 30–35%, 600–1,100 h |
 | 2026-10-05 | major | (in ROADMAP.md) First honest assessment by dimension and area |
+
+## MIXEL resource branding (product-specific)
+
+Source update 2026-10-19: company links use **MIXEL Website** / **MIXEL Creative Apps** and `https://www.mixel.ch`. Existing MIXEL Print project/repository links remain unchanged. Upstream Discord UI, actions and locale keys are removed; no replacement Discord server is claimed. Active resource IDs: `help.website`, `help.app_page`, `help.github`.
+
+This supplemental product-branding record is outside the Adobe feature comparison; scores and generated parity rows are unchanged. Matching source regressions are proposed, with build/test/native click verification pending application of this patch. Existing privacy, author, licence and third-party credit records remain applicable.
