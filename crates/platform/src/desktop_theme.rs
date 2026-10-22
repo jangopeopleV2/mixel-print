@@ -113,7 +113,7 @@ impl DesktopTheme {
         let thread_shared = Arc::clone(&shared);
         let (stop, stopped) = async_channel::bounded::<()>(1);
         let worker = std::thread::Builder::new().name("pdfcraft-desktop-theme".into()).spawn(move || {
-            futures_lite::future::block_on(futures_lite::future::race(
+            zbus::block_on(futures_lite::future::race(
                 async {
                     let _ = stopped.recv().await;
                 },
@@ -146,7 +146,7 @@ mod portal {
     use super::{DesktopAppearance, Shared};
     use futures_lite::StreamExt;
     use std::sync::Arc;
-    use zbus::zvariant::{OwnedValue, Value};
+    use zbus::{OwnedVariant, Variant};
 
     const DESTINATION: &str = "org.freedesktop.portal.Desktop";
     const PATH: &str = "/org/freedesktop/portal/desktop";
@@ -159,19 +159,19 @@ mod portal {
     const GNOME_NAMESPACE: &str = "org.gnome.desktop.interface";
 
     /// Standard uint32 semantics, including future values treated as no preference.
-    fn numeric(value: &Value<'_>) -> Option<Option<DesktopAppearance>> {
+    fn numeric(value: &Variant<'_>) -> Option<Option<DesktopAppearance>> {
         match value {
-            Value::U32(1) => Some(Some(DesktopAppearance::Dark)),
-            Value::U32(2) => Some(Some(DesktopAppearance::Light)),
-            Value::U32(_) => Some(None),
+            Variant::U32(1) => Some(Some(DesktopAppearance::Dark)),
+            Variant::U32(2) => Some(Some(DesktopAppearance::Light)),
+            Variant::U32(_) => Some(None),
             _ => None,
         }
     }
 
     /// GNOME's string values; anything but the two preferences (`default`) is no preference.
-    fn gnome_scheme(value: &Value<'_>) -> Option<Option<DesktopAppearance>> {
+    fn gnome_scheme(value: &Variant<'_>) -> Option<Option<DesktopAppearance>> {
         match value {
-            Value::Str(scheme) => Some(match scheme.as_str() {
+            Variant::Str(scheme) => Some(match scheme.as_str() {
                 "prefer-dark" => Some(DesktopAppearance::Dark),
                 "prefer-light" => Some(DesktopAppearance::Light),
                 _ => None,
@@ -186,15 +186,15 @@ mod portal {
     }
 
     fn read_gnome_reply(reply: &zbus::Message) -> Option<DesktopAppearance> {
-        let answer = reply.body().deserialize::<OwnedValue>().ok()?;
+        let answer = reply.body().deserialize::<OwnedVariant>().ok()?;
         // Same two variant layers as the freedesktop Read.
-        let Value::Value(inner) = &*answer else { return None };
+        let Variant::Variant(inner) = &*answer else { return None };
         gnome_scheme(inner).flatten()
     }
 
     fn gnome_setting_changed(message: &zbus::Message) -> Option<Option<DesktopAppearance>> {
         let body = message.body();
-        let (namespace, key, value) = body.deserialize::<(&str, &str, OwnedValue)>().ok()?;
+        let (namespace, key, value) = body.deserialize::<(&str, &str, OwnedVariant)>().ok()?;
         if namespace != GNOME_NAMESPACE || key != KEY {
             return None;
         }
@@ -202,16 +202,16 @@ mod portal {
     }
 
     fn read_reply(reply: &zbus::Message) -> Option<DesktopAppearance> {
-        let answer = reply.body().deserialize::<OwnedValue>().ok()?;
+        let answer = reply.body().deserialize::<OwnedVariant>().ok()?;
         // Legacy Read is available in Settings version 1 and returns two variant layers. The
-        // OwnedValue decoder removes the outer layer; unwrap exactly the documented inner one.
-        let Value::Value(inner) = &*answer else { return None };
+        // OwnedVariant decoder removes the outer layer; unwrap exactly the documented inner one.
+        let Variant::Variant(inner) = &*answer else { return None };
         numeric(inner).flatten()
     }
 
     fn setting_changed(message: &zbus::Message) -> Option<Option<DesktopAppearance>> {
         let body = message.body();
-        let (namespace, key, value) = body.deserialize::<(&str, &str, OwnedValue)>().ok()?;
+        let (namespace, key, value) = body.deserialize::<(&str, &str, OwnedVariant)>().ok()?;
         if namespace != NAMESPACE || key != KEY {
             return None;
         }
@@ -227,27 +227,27 @@ mod portal {
     }
 
     async fn watch_inner(shared: &Shared) -> zbus::Result<()> {
-        let connection = zbus::connection::Builder::session()?.method_timeout(std::time::Duration::from_secs(5)).build().await?;
+        let connection = zbus::connection::Builder::session().method_timeout(std::time::Duration::from_secs(5)).build().await?;
         watch_connection(shared, connection).await
     }
 
     fn setting_rule(namespace: &'static str) -> zbus::Result<zbus::MatchRule<'static>> {
-        Ok(zbus::MatchRule::builder()
+        zbus::MatchRule::builder()
             .msg_type(zbus::message::Type::Signal)
-            .sender(DESTINATION)?
-            .path(PATH)?
-            .interface(INTERFACE)?
-            .member("SettingChanged")?
-            .arg(0, namespace)?
-            .arg(1, KEY)?
-            .build())
+            .sender(DESTINATION)
+            .path(PATH)
+            .interface(INTERFACE)
+            .member("SettingChanged")
+            .arg(0, namespace)
+            .arg(1, KEY)
+            .build()
     }
 
     async fn watch_connection(shared: &Shared, connection: zbus::Connection) -> zbus::Result<()> {
         // Install the matches before reading. Unlike Proxy::receive_signal this does not require
         // the portal to already own its bus name, so Read can activate an installed portal.
-        let freedesktop_changes = zbus::MessageStream::for_match_rule(setting_rule(NAMESPACE)?, &connection, Some(64)).await?;
-        let gnome_changes = zbus::MessageStream::for_match_rule(setting_rule(GNOME_NAMESPACE)?, &connection, Some(64)).await?;
+        let freedesktop_changes = zbus::MessageStream::for_match_rule(setting_rule(NAMESPACE)?, &connection, std::num::NonZeroUsize::new(64)).await?;
+        let gnome_changes = zbus::MessageStream::for_match_rule(setting_rule(GNOME_NAMESPACE)?, &connection, std::num::NonZeroUsize::new(64)).await?;
         let mut changes = freedesktop_changes.or(gnome_changes);
         let reply = connection.call_method(Some(DESTINATION), PATH, Some(INTERFACE), "Read", &(NAMESPACE, KEY)).await;
         let mut freedesktop = reply.as_ref().ok().and_then(read_reply);
@@ -275,13 +275,13 @@ mod portal {
     mod tests {
         use super::*;
 
-        fn reply(value: Value<'_>) -> zbus::Message {
-            let call = zbus::Message::method_call(PATH, "Read").unwrap().build(&(NAMESPACE, KEY)).unwrap();
-            zbus::Message::method_return(&call.header()).unwrap().build(&value).unwrap()
+        fn reply(value: Variant<'_>) -> zbus::Message {
+            let call = zbus::Message::method_call(PATH, "Read").build(&(NAMESPACE, KEY)).unwrap();
+            zbus::Message::method_return(&call.header()).build(&value).unwrap()
         }
 
-        fn signal(namespace: &str, key: &str, value: Value<'_>) -> zbus::Message {
-            zbus::Message::signal(PATH, INTERFACE, "SettingChanged").unwrap().build(&(namespace, key, value)).unwrap()
+        fn signal(namespace: &str, key: &str, value: Variant<'_>) -> zbus::Message {
+            zbus::Message::signal(PATH, INTERFACE, "SettingChanged").build(&(namespace, key, value)).unwrap()
         }
 
         #[test]
@@ -289,45 +289,45 @@ mod portal {
             // Keep the native subscription implementation typechecked on non-Linux test hosts.
             let _native_backend = watch;
             for (number, expected) in [(0, None), (1, Some(DesktopAppearance::Dark)), (2, Some(DesktopAppearance::Light)), (u32::MAX, None)] {
-                assert_eq!(read_reply(&reply(Value::Value(Box::new(Value::U32(number))))), expected);
+                assert_eq!(read_reply(&reply(Variant::Variant(Box::new(Variant::U32(number))))), expected);
             }
         }
 
         #[test]
         fn legacy_read_refuses_strings_wrong_types_and_extra_nesting() {
-            assert_eq!(read_reply(&reply(Value::Value(Box::new(Value::from("prefer-dark"))))), None);
-            assert_eq!(read_reply(&reply(Value::Value(Box::new(Value::I32(1))))), None);
-            assert_eq!(read_reply(&reply(Value::Value(Box::new(Value::Value(Box::new(Value::U32(1))))))), None);
-            assert_eq!(read_reply(&reply(Value::U32(1))), None);
+            assert_eq!(read_reply(&reply(Variant::Variant(Box::new(Variant::from("prefer-dark"))))), None);
+            assert_eq!(read_reply(&reply(Variant::Variant(Box::new(Variant::I32(1))))), None);
+            assert_eq!(read_reply(&reply(Variant::Variant(Box::new(Variant::Variant(Box::new(Variant::U32(1))))))), None);
+            assert_eq!(read_reply(&reply(Variant::U32(1))), None);
         }
 
         #[test]
         fn signals_distinguish_no_preference_from_unrelated_or_malformed_updates() {
-            assert_eq!(setting_changed(&signal(NAMESPACE, KEY, Value::U32(1))), Some(Some(DesktopAppearance::Dark)));
-            assert_eq!(setting_changed(&signal(NAMESPACE, KEY, Value::U32(2))), Some(Some(DesktopAppearance::Light)));
-            assert_eq!(setting_changed(&signal(NAMESPACE, KEY, Value::U32(0))), Some(None));
-            assert_eq!(setting_changed(&signal(NAMESPACE, KEY, Value::U32(1234))), Some(None));
-            assert_eq!(setting_changed(&signal("org.gnome.desktop.interface", KEY, Value::U32(1))), None);
-            assert_eq!(setting_changed(&signal(NAMESPACE, "contrast", Value::U32(1))), None);
-            assert_eq!(setting_changed(&signal(NAMESPACE, KEY, Value::from("prefer-dark"))), None);
-            assert_eq!(setting_changed(&signal(NAMESPACE, KEY, Value::Value(Box::new(Value::U32(1))))), None);
-            let wrong_body = zbus::Message::signal(PATH, INTERFACE, "SettingChanged").unwrap().build(&(NAMESPACE, KEY)).unwrap();
+            assert_eq!(setting_changed(&signal(NAMESPACE, KEY, Variant::U32(1))), Some(Some(DesktopAppearance::Dark)));
+            assert_eq!(setting_changed(&signal(NAMESPACE, KEY, Variant::U32(2))), Some(Some(DesktopAppearance::Light)));
+            assert_eq!(setting_changed(&signal(NAMESPACE, KEY, Variant::U32(0))), Some(None));
+            assert_eq!(setting_changed(&signal(NAMESPACE, KEY, Variant::U32(1234))), Some(None));
+            assert_eq!(setting_changed(&signal("org.gnome.desktop.interface", KEY, Variant::U32(1))), None);
+            assert_eq!(setting_changed(&signal(NAMESPACE, "contrast", Variant::U32(1))), None);
+            assert_eq!(setting_changed(&signal(NAMESPACE, KEY, Variant::from("prefer-dark"))), None);
+            assert_eq!(setting_changed(&signal(NAMESPACE, KEY, Variant::Variant(Box::new(Variant::U32(1))))), None);
+            let wrong_body = zbus::Message::signal(PATH, INTERFACE, "SettingChanged").build(&(NAMESPACE, KEY)).unwrap();
             assert_eq!(setting_changed(&wrong_body), None);
         }
 
         #[test]
         fn the_gnome_schema_answers_when_the_freedesktop_one_states_no_preference() {
             // XFCE's portal proxies only the GSettings schemas; its answer is a string.
-            assert_eq!(read_gnome_reply(&reply(Value::Value(Box::new(Value::from("prefer-dark"))))), Some(DesktopAppearance::Dark));
-            assert_eq!(read_gnome_reply(&reply(Value::Value(Box::new(Value::from("prefer-light"))))), Some(DesktopAppearance::Light));
-            assert_eq!(read_gnome_reply(&reply(Value::Value(Box::new(Value::from("default"))))), None);
-            assert_eq!(read_gnome_reply(&reply(Value::Value(Box::new(Value::U32(1))))), None);
-            assert_eq!(read_gnome_reply(&reply(Value::from("prefer-dark"))), None);
-            assert_eq!(gnome_setting_changed(&signal(GNOME_NAMESPACE, KEY, Value::from("prefer-dark"))), Some(Some(DesktopAppearance::Dark)));
-            assert_eq!(gnome_setting_changed(&signal(GNOME_NAMESPACE, KEY, Value::from("default"))), Some(None));
-            assert_eq!(gnome_setting_changed(&signal(GNOME_NAMESPACE, "gtk-theme", Value::from("prefer-dark"))), None);
-            assert_eq!(gnome_setting_changed(&signal(NAMESPACE, KEY, Value::from("prefer-dark"))), None);
-            assert_eq!(gnome_setting_changed(&signal(GNOME_NAMESPACE, KEY, Value::U32(1))), None);
+            assert_eq!(read_gnome_reply(&reply(Variant::Variant(Box::new(Variant::from("prefer-dark"))))), Some(DesktopAppearance::Dark));
+            assert_eq!(read_gnome_reply(&reply(Variant::Variant(Box::new(Variant::from("prefer-light"))))), Some(DesktopAppearance::Light));
+            assert_eq!(read_gnome_reply(&reply(Variant::Variant(Box::new(Variant::from("default"))))), None);
+            assert_eq!(read_gnome_reply(&reply(Variant::Variant(Box::new(Variant::U32(1))))), None);
+            assert_eq!(read_gnome_reply(&reply(Variant::from("prefer-dark"))), None);
+            assert_eq!(gnome_setting_changed(&signal(GNOME_NAMESPACE, KEY, Variant::from("prefer-dark"))), Some(Some(DesktopAppearance::Dark)));
+            assert_eq!(gnome_setting_changed(&signal(GNOME_NAMESPACE, KEY, Variant::from("default"))), Some(None));
+            assert_eq!(gnome_setting_changed(&signal(GNOME_NAMESPACE, "gtk-theme", Variant::from("prefer-dark"))), None);
+            assert_eq!(gnome_setting_changed(&signal(NAMESPACE, KEY, Variant::from("prefer-dark"))), None);
+            assert_eq!(gnome_setting_changed(&signal(GNOME_NAMESPACE, KEY, Variant::U32(1))), None);
             // The freedesktop answer wins when it states one (KDE answers only that one).
             assert_eq!(combined(Some(DesktopAppearance::Light), Some(DesktopAppearance::Dark)), Some(DesktopAppearance::Light));
             assert_eq!(combined(None, Some(DesktopAppearance::Dark)), Some(DesktopAppearance::Dark));
@@ -357,16 +357,16 @@ mod portal {
             }
             #[zbus::interface(name = "org.freedesktop.portal.Settings")]
             impl Settings {
-                async fn read(&self, namespace: &str, key: &str) -> zbus::fdo::Result<OwnedValue> {
+                async fn read(&self, namespace: &str, key: &str) -> zbus::fdo::Result<OwnedVariant> {
                     if namespace != NAMESPACE || key != KEY {
                         return Err(zbus::fdo::Error::InvalidArgs("unknown setting".into()));
                     }
                     // Capture Light before a later Dark signal, then deliberately return the
                     // stale snapshot after that signal. Reply ordering cannot date this value.
-                    let snapshot = Value::Value(Box::new(Value::U32(2)));
+                    let snapshot = Variant::Variant(Box::new(Variant::U32(2)));
                     self.captured.send(()).map_err(|error| zbus::fdo::Error::Failed(error.to_string()))?;
                     self.release.recv().await.map_err(|error| zbus::fdo::Error::Failed(error.to_string()))?;
-                    OwnedValue::try_from(snapshot).map_err(|error| zbus::fdo::Error::Failed(error.to_string()))
+                    OwnedVariant::try_from(snapshot).map_err(|error| zbus::fdo::Error::Failed(error.to_string()))
                 }
             }
             fn wait_for(tracker: &DesktopTheme, appearance: Option<DesktopAppearance>) {
@@ -377,12 +377,12 @@ mod portal {
                 }
             }
             fn emit(connection: &zbus::Connection, number: u32) {
-                futures_lite::future::block_on(connection.emit_signal(
+                zbus::block_on(connection.emit_signal(
                     None::<&str>,
                     PATH,
                     INTERFACE,
                     "SettingChanged",
-                    &(NAMESPACE, KEY, OwnedValue::from(number)),
+                    &(NAMESPACE, KEY, OwnedVariant::from(number)),
                 ))
                 .unwrap();
             }
@@ -401,20 +401,11 @@ mod portal {
             assert!(!address.trim().is_empty());
             let (captured, capture_seen) = mpsc::channel();
             let (release, released) = async_channel::bounded(1);
-            let server = futures_lite::future::block_on(
-                zbus::connection::Builder::address(address.trim())
-                    .unwrap()
-                    .name(DESTINATION)
-                    .unwrap()
-                    .serve_at(PATH, Settings { captured, release: released })
-                    .unwrap()
-                    .build(),
+            let server = zbus::block_on(
+                zbus::connection::Builder::address(address.trim()).name(DESTINATION).serve_at(PATH, Settings { captured, release: released }).build(),
             )
             .unwrap();
-            let client = futures_lite::future::block_on(
-                zbus::connection::Builder::address(address.trim()).unwrap().method_timeout(Duration::from_secs(5)).build(),
-            )
-            .unwrap();
+            let client = zbus::block_on(zbus::connection::Builder::address(address.trim()).method_timeout(Duration::from_secs(5)).build()).unwrap();
             let source = Arc::new(OnceLock::<Weak<Shared>>::new());
             let observed = Arc::clone(&source);
             let (wake, woke) = mpsc::channel();

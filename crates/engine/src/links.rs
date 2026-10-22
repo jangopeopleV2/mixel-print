@@ -1,14 +1,13 @@
-//! Where MIXEL Print and the ArtCraft community live on the web. One table, so the Help menu, the
+//! MIXEL company and Print project links. One table, so the Help menu, the
 //! About dialog, the home screen, the CLI and the README agree.
 
 use icu_properties::props::Script;
 use std::path::{Path, PathBuf};
 
-/// The app's name in ArtCraft URLs (`getartcraft.com/apps/{APP}`, `github.com/storytold/{APP}`).
+/// The legacy application slug.
 pub const APP: &str = "pdfcraft";
 
-pub const DISCORD: &str = "https://discord.gg/artcraft";
-pub const WEBSITE: &str = "https://getartcraft.com";
+pub const WEBSITE: &str = "https://www.mixel.ch";
 pub const APP_PAGE: &str = "https://github.com/jangopeopleV2/mixel-print";
 pub const GITHUB: &str = "https://github.com/jangopeopleV2/mixel-print";
 
@@ -22,12 +21,11 @@ pub struct Link {
     pub icon: &'static str,
 }
 
-/// In the order they are shown. Discord comes first: it is where people get help fastest.
+/// Company and project resource links, in display order.
 pub const LINKS: &[Link] = &[
-    Link { command: "help.discord", label: "Join the ArtCraft Discord", url: DISCORD, icon: "messages-square" },
     Link { command: "help.app_page", label: "MIXEL Print web page", url: APP_PAGE, icon: "globe" },
     Link { command: "help.github", label: "MIXEL Print on GitHub", url: GITHUB, icon: "code-xml" },
-    Link { command: "help.website", label: "ArtCraft website", url: WEBSITE, icon: "external-link" },
+    Link { command: "help.website", label: "MIXEL Website", url: WEBSITE, icon: "external-link" },
 ];
 
 pub fn for_command(id: &str) -> Option<&'static Link> {
@@ -487,7 +485,7 @@ mod tests {
     }
 
     #[test]
-    fn urls_follow_the_artcraft_scheme() {
+    fn urls_follow_the_mixel_project_scheme() {
         assert!(super::APP_PAGE.starts_with("https://github.com/jangopeopleV2/mixel-print"));
         assert!(super::GITHUB.starts_with("https://github.com/jangopeopleV2/mixel-print"));
         for l in super::LINKS {

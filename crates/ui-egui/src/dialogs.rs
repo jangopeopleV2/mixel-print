@@ -1111,10 +1111,13 @@ fn dialogs(app: &mut PdfCraftApp, ctx: &egui::Context) {
                             .small(),
                         );
                         ui.add_space(12.0);
-                        ui.label(egui::RichText::new("Based on pdfcraft by the ArtCraft team.").color(t.text_muted));
                         ui.add_space(6.0);
                         if let Some(cmd) = widgets::community_links(ui) {
                             link_command = Some(cmd);
+                        }
+                        ui.add_space(6.0);
+                        if ui.link(tl!("Privacy Policy")).on_hover_text("https://www.mixel.ch/legal/craft/privacy/").clicked() {
+                            app.open_url("https://www.mixel.ch/legal/craft/privacy/");
                         }
                     }
                 }

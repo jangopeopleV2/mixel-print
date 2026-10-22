@@ -602,7 +602,6 @@
 	From {file}	Iš {file}
 	From:	Nuo:
 	Front side only	Tik priekinė pusė
-	Get help, share feedback and follow development on Discord.	Gaukite pagalbos, pateikite atsiliepimų ir sekite naujienas „Discord“.
 	Go to a page view	Pereiti į puslapio rodinį
 	Go to page {p}	Pereiti į puslapį {p}
 	Go to the page	Pereiti į puslapį
@@ -654,8 +653,7 @@
 	JavaScript Console	JavaScript konsolė
 	JavaScript is turned off (Preferences ▸ JavaScript).	JavaScript išjungtas (Nuostatos > JavaScript).
 	JavaScript, e.g. getField("total").value	JavaScript, pvz., getField("total").value
-	Join our Discord	Prisijunkite prie mūsų „Discord“ serverio
-	Join the ArtCraft community	Prisijunkite prie „ArtCraft“ bendruomenės
+	MIXEL Creative Apps	MIXEL kūrybinės programos
 	Justify	Abipusė lygiuotė
 	Keep source fonts	Išsaugoti šaltinio šriftus
 	Keep tool selected	Palikti įrankį pasirinktą
@@ -1323,7 +1321,7 @@
 	Archive documents	Archyvuoti dokumentus
 	Area	Plotas
 	Arrow	Rodyklė
-	ArtCraft website	„ArtCraft“ svetainė
+	MIXEL Website	„MIXEL“ svetainė
 	Ask about this document	Klausti apie šį dokumentą
 	Attach a file	Pridėti failą
 	Attach file	Pridėti failą
@@ -1458,7 +1456,6 @@
 	Insert text	Įterpti tekstą
 	JavaScript	JavaScript
 	JavaScript console…	JavaScript konsolė…
-	Join the ArtCraft Discord	Prisijungti prie „ArtCraft“ „Discord“ serverio
 	Light gray	Šviesiai pilka
 	Line	Linija
 	Link	Saitas
@@ -2584,3 +2581,5 @@ key	End	End
 key	Space	Tarpas
 	Move tag earlier	Perkelti žymą anksčiau
 	Move tag later	Perkelti žymą vėliau
+	Privacy Policy	Privatumo politika
+	Product links, source code and updates from MIXEL.	MIXEL produktų nuorodos, pirminis kodas ir naujinimai.

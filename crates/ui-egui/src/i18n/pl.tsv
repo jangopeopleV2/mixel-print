@@ -89,7 +89,6 @@
 	Side panels	Panele boczne
 	Enable Acrobat JavaScript	Włącz Acrobat JavaScript
 	OK	OK
-	Join our Discord	Dołącz do naszego Discorda
 	Close	Zamknij
 	Next / previous match	Następne / poprzednie dopasowanie
 	Copy selected text	Kopiuj zaznaczony tekst
@@ -157,8 +156,7 @@
 	Current page — type a page number or label (such as iv) and press Enter	Bieżąca strona — wpisz numer lub etykietę strony (np. iv) i naciśnij Enter
 	Welcome to MIXEL Print	Witamy w MIXEL Print
 	An open-source PDF workbench — local, private, and scriptable.	Otwarty zestaw narzędzi do PDF — lokalny, prywatny i obsługujący skrypty.
-	Join the ArtCraft community	Dołącz do społeczności ArtCraft
-	Get help, share feedback and follow development on Discord.	Uzyskaj pomoc, podziel się opinią i śledź rozwój na Discordzie.
+	MIXEL Creative Apps	Kreatywne aplikacje MIXEL
 	Recommended tools	Polecane narzędzia
 	Use now	Użyj teraz
 	Open file	Otwórz plik
@@ -302,10 +300,9 @@
 	Split document…	Podziel dokument…
 	Number pages…	Ponumeruj strony…
 	Keyboard shortcuts	Skróty klawiaturowe
-	Join the ArtCraft Discord	Dołącz do Discorda ArtCraft
 	MIXEL Print web page	Strona internetowa MIXEL Print
 	MIXEL Print on GitHub	MIXEL Print na GitHubie
-	ArtCraft website	Strona internetowa ArtCraft
+	MIXEL Website	Strona internetowa MIXEL
 	Check for updates…	Sprawdź aktualizacje…
 	About MIXEL Print	O MIXEL Print
 	Export a PDF	Eksportuj PDF
@@ -2320,3 +2317,5 @@ animation effects	Off	Wyłączone
 	This form's scripts are turned off because one ran too long. Reopen the document to run them again.	Skrypty tego formularza są wyłączone, ponieważ jeden z nich działał zbyt długo. Otwórz dokument ponownie, aby znów je uruchomić.
 	Move tag earlier	Przenieś znacznik wcześniej
 	Move tag later	Przenieś znacznik później
+	Privacy Policy	Polityka prywatności
+	Product links, source code and updates from MIXEL.	Odnośniki do produktów, kod źródłowy i aktualizacje od MIXEL.

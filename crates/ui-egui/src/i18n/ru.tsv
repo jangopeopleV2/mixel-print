@@ -86,7 +86,6 @@
 	Flatten Fill & Sign when saving	Расплющить «Заполнить и подписать» при сохранении
 	Text, marks and signatures become part of the page. Other comments stay editable.	Текст, пометки и подписи становятся частью страницы. Остальные комментарии можно по-прежнему править.
 	OK	OK
-	Join our Discord	Присоединяйтесь к нашему Discord
 	Close	Закрыть
 	Next / previous match	Следующее / предыдущее совпадение
 	Copy selected text	Копировать выделенный текст
@@ -154,8 +153,7 @@
 	Current page — type a page number or label (such as iv) and press Enter	Текущая страница — введите номер или метку страницы (например, iv) и нажмите Enter
 	Welcome to MIXEL Print	Добро пожаловать в MIXEL Print
 	An open-source PDF workbench — local, private, and scriptable.	Открытый PDF-редактор — локальный, приватный и программируемый.
-	Join the ArtCraft community	Присоединяйтесь к сообществу ArtCraft
-	Get help, share feedback and follow development on Discord.	Получайте помощь, делитесь отзывами и следите за разработкой в Discord.
+	MIXEL Creative Apps	Творческие приложения MIXEL
 	Recommended tools	Рекомендуемые инструменты
 	Use now	Использовать сейчас
 	Open file	Открыть файл
@@ -300,10 +298,9 @@
 	Split document…	Разделить документ…
 	Number pages…	Пронумеровать страницы…
 	Keyboard shortcuts	Горячие клавиши
-	Join the ArtCraft Discord	Присоединяйтесь к Discord ArtCraft
 	MIXEL Print web page	Веб-страница MIXEL Print
 	MIXEL Print on GitHub	MIXEL Print на GitHub
-	ArtCraft website	Веб-сайт ArtCraft
+	MIXEL Website	Веб-сайт MIXEL
 	Check for updates…	Проверить обновления…
 	About MIXEL Print	О программе MIXEL Print
 	Export a PDF	Экспортировать PDF
@@ -2253,3 +2250,5 @@ animation effects	Off	Выкл
 	Local cross-PDF links require the desktop app	Локальные ссылки между PDF работают только в настольном приложении
 	Move tag earlier	Переместить тег раньше
 	Move tag later	Переместить тег позже
+	Privacy Policy	Политика конфиденциальности
+	Product links, source code and updates from MIXEL.	Ссылки на продукты, исходный код и обновления от MIXEL.

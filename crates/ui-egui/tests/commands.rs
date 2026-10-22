@@ -1,4 +1,4 @@
-//! The command registry drives menus, shortcuts and the palette: every registered command must
+//! The command registry drives menus, shortcuts and the palette: every distribution-available command must
 //! be implemented, disabled commands must say why, and every surface must reach the same action.
 
 use egui::os::OperatingSystem;
@@ -116,6 +116,13 @@ const PICKERS: &[&str] = &[
 #[test]
 fn every_registered_command_is_implemented() {
     for spec in COMMANDS {
+        #[cfg(all(target_os = "macos", feature = "mac-app-store"))]
+        if spec.id == "help.check_updates" {
+            let mut app = PdfCraftApp::new();
+            assert!(!app.execute(spec.id), "MAS update checks must be unavailable");
+            assert!(app.last_opened_url.is_none());
+            continue;
+        }
         if PICKERS.contains(&spec.id) {
             continue;
         }
@@ -767,4 +774,20 @@ fn palette_ime_outside_click_closes_without_running_a_command() {
     assert!(!h.state().palette_open);
     assert!(h.state().palette_query.is_empty());
     assert_eq!(h.state().session.get(h.state().views[0].id).unwrap().info.pages[0].rotation, 0);
+}
+
+#[test]
+fn the_help_update_item_matches_the_distribution() {
+    let mut h = harness();
+    h.get_by_label("Menu").click();
+    h.run_steps(2);
+    h.get_by_label("Help ⏵").hover();
+    h.run_steps(3);
+    // Prove Help is open before checking that the MAS-only omission is intentional.
+    h.get_by_label("About MIXEL Print");
+    assert_eq!(
+        h.query_by_label("Check for updates…").is_some(),
+        !cfg!(all(target_os = "macos", feature = "mac-app-store")),
+        "only ordinary distributions expose an external update command",
+    );
 }

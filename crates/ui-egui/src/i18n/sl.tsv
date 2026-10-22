@@ -229,7 +229,7 @@
 	Archive documents	Arhiviraj dokumente
 	Area	Ploščina
 	Arrow	Puščica
-	ArtCraft website	Spletna stran ArtCraft
+	MIXEL Website	Spletna stran MIXEL
 	Ask about this document	Vprašaj o tem dokumentu
 	Asks GitHub for the latest release. Nothing is downloaded or installed automatically.	Vpraša GitHub za najnovejšo izdajo. Ničesar se ne prenese ali namesti samodejno.
 	Associated with content	Povezano z vsebino
@@ -865,7 +865,6 @@
 	Full screen mode	Celozaslonski način
 	General	Splošno
 	Geospatial location	Geoprostorska lokacija
-	Get help, share feedback and follow development on Discord.	Poiščite pomoč, delite povratne informacije in spremljajte razvoj na Discordu.
 	Go to a page view	Pojdi na pogled strani
 	Go to page {p}	Pojdi na stran {p}
 	Go to page…	Pojdi na stran…
@@ -971,9 +970,7 @@
 	JavaScript console…	Konzola JavaScript…
 	JavaScript is turned off (Preferences ▸ JavaScript).	JavaScript je izklopljen (Nastavitve > JavaScript).
 	JavaScript, e.g. getField("total").value	JavaScript, npr. getField("total").value
-	Join our Discord	Discord kanal
-	Join the ArtCraft Discord	Pridružite se Discordu ArtCraft
-	Join the ArtCraft community	Pridružite se skupnosti ArtCraft
+	MIXEL Creative Apps	Ustvarjalne aplikacije MIXEL
 	July	Julij
 	June	Junij
 	Justify	Obojestransko poravnano
@@ -2345,3 +2342,5 @@ animation effects	Off	Izklopljeni
 	Local cross-PDF links require the desktop app	Lokalne povezave med PDF-ji zahtevajo namizno aplikacijo
 	Move tag earlier	Premakni oznako prej
 	Move tag later	Premakni oznako pozneje
+	Privacy Policy	Pravilnik o zasebnosti
+	Product links, source code and updates from MIXEL.	Povezave do izdelkov, izvorna koda in posodobitve podjetja MIXEL.

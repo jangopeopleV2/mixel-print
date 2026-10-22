@@ -57,7 +57,6 @@
 	Flatten Fill & Sign when saving	Kaydederken Doldur ve İmzala'yı düzleştir
 	Text, marks and signatures become part of the page. Other comments stay editable.	Metin, işaretler ve imzalar sayfanın bir parçası olur. Diğer yorumlar düzenlenebilir kalır.
 	OK	Tamam
-	Join our Discord	Discord'umuza katılın
 	Close	Kapat
 	Next / previous match	Sonraki / önceki eşleşme
 	Copy selected text	Seçilen metni kopyala
@@ -119,8 +118,7 @@
 	Current page — type a page number or label (such as iv) and press Enter	Geçerli sayfa — bir sayfa numarası veya etiketi (örneğin iv) yazıp Enter'a basın
 	Welcome to MIXEL Print	MIXEL Print'a Hoş Geldiniz
 	An open-source PDF workbench — local, private, and scriptable.	Açık kaynaklı bir PDF çalışma alanı — yerel, gizli ve komut dosyalarıyla yönetilebilir.
-	Join the ArtCraft community	ArtCraft topluluğuna katılın
-	Get help, share feedback and follow development on Discord.	Discord'da yardım alın, geri bildirim paylaşın ve geliştirmeyi takip edin.
+	MIXEL Creative Apps	MIXEL Yaratıcı Uygulamaları
 	Recommended tools	Önerilen araçlar
 	Use now	Şimdi kullan
 	Open file	Dosya aç
@@ -265,10 +263,9 @@
 	Split document…	Belgeyi böl…
 	Number pages…	Sayfaları numaralandır…
 	Keyboard shortcuts	Klavye kısayolları
-	Join the ArtCraft Discord	ArtCraft Discord'una katıl
 	MIXEL Print web page	MIXEL Print web sayfası
 	MIXEL Print on GitHub	GitHub'da MIXEL Print
-	ArtCraft website	ArtCraft web sitesi
+	MIXEL Website	MIXEL web sitesi
 	Check for updates…	Güncellemeleri denetle…
 	About MIXEL Print	MIXEL Print hakkında
 	Export a PDF	PDF'i dışa aktar
@@ -2336,3 +2333,5 @@ animation effects	Off	Kapalı
 	Local cross-PDF links require the desktop app	PDF'ler arası yerel bağlantılar masaüstü uygulamasını gerektirir
 	Move tag earlier	Etiketi daha erken taşı
 	Move tag later	Etiketi daha geç taşı
+	Privacy Policy	Gizlilik Politikası
+	Product links, source code and updates from MIXEL.	MIXEL'den ürün bağlantıları, kaynak kodu ve güncellemeler.

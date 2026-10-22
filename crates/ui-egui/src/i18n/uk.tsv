@@ -91,7 +91,6 @@
 	Side panels	Бічні панелі
 	Enable Acrobat JavaScript	Увімкнути Acrobat JavaScript
 	OK	OK
-	Join our Discord	Приєднатися до нашого Discord
 	Close	Закрити
 	Next / previous match	Наступний / попередній збіг
 	Copy selected text	Копіювати виділений текст
@@ -159,8 +158,7 @@
 	Current page — type a page number or label (such as iv) and press Enter	Поточна сторінка — введіть номер або позначку сторінки (наприклад iv) і натисніть Enter
 	Welcome to MIXEL Print	Вітаємо в MIXEL Print
 	An open-source PDF workbench — local, private, and scriptable.	Відкритий інструментарій для PDF — локальний, приватний і з підтримкою сценаріїв.
-	Join the ArtCraft community	Приєднатися до спільноти ArtCraft
-	Get help, share feedback and follow development on Discord.	Отримуйте допомогу, діліться відгуками й стежте за розробкою в Discord.
+	MIXEL Creative Apps	Творчі програми MIXEL
 	Recommended tools	Рекомендовані інструменти
 	Use now	Використати зараз
 	Open file	Відкрити файл
@@ -305,10 +303,9 @@
 	Split document…	Розділити документ…
 	Number pages…	Пронумерувати сторінки…
 	Keyboard shortcuts	Клавіатурні скорочення
-	Join the ArtCraft Discord	Приєднатися до Discord ArtCraft
 	MIXEL Print web page	Вебсторінка MIXEL Print
 	MIXEL Print on GitHub	MIXEL Print на GitHub
-	ArtCraft website	Вебсайт ArtCraft
+	MIXEL Website	Вебсайт MIXEL
 	Check for updates…	Перевірити оновлення…
 	About MIXEL Print	Про MIXEL Print
 	Export a PDF	Експортувати PDF
@@ -2362,3 +2359,5 @@ animation effects	Off	Вимкнено
 	Local cross-PDF links require the desktop app	Локальні посилання між PDF працюють лише в настільному застосунку
 	Move tag earlier	Перемістити тег раніше
 	Move tag later	Перемістити тег пізніше
+	Privacy Policy	Політика конфіденційності
+	Product links, source code and updates from MIXEL.	Посилання на продукти, вихідний код і оновлення від MIXEL.

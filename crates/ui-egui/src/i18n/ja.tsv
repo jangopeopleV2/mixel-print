@@ -93,7 +93,6 @@
 	Side panels	サイドパネル
 	Enable Acrobat JavaScript	Acrobat JavaScript を有効にする
 	OK	OK
-	Join our Discord	Discord に参加
 	Close	閉じる
 	Next / previous match	次／前の検索結果
 	Copy selected text	選択したテキストをコピー
@@ -161,8 +160,7 @@
 	Current page — type a page number or label (such as iv) and press Enter	現在のページ：ページ番号またはラベル（例：iv）を入力して Enter
 	Welcome to MIXEL Print	MIXEL Print へようこそ
 	An open-source PDF workbench — local, private, and scriptable.	ローカルで処理し、プライバシーを守る、スクリプト対応のオープンソース PDF ツール。
-	Join the ArtCraft community	ArtCraft コミュニティに参加
-	Get help, share feedback and follow development on Discord.	Discord で質問やフィードバックを共有し、開発の進捗を確認できます。
+	MIXEL Creative Apps	MIXEL クリエイティブアプリ
 	Recommended tools	おすすめのツール
 	Use now	使用する
 	Open file	ファイルを開く
@@ -307,10 +305,9 @@
 	Split document…	文書を分割…
 	Number pages…	ページ番号を設定…
 	Keyboard shortcuts	キーボードショートカット
-	Join the ArtCraft Discord	ArtCraft の Discord に参加
 	MIXEL Print web page	MIXEL Print の Web 版
 	MIXEL Print on GitHub	GitHub の MIXEL Print
-	ArtCraft website	ArtCraft のウェブサイト
+	MIXEL Website	MIXEL のウェブサイト
 	Check for updates…	更新を確認…
 	About MIXEL Print	MIXEL Print について
 	Export a PDF	PDF を書き出す
@@ -2340,3 +2337,5 @@ animation effects	Off	オフ
 	Local cross-PDF links require the desktop app	PDF 間のローカルリンクにはデスクトップアプリが必要です
 	Move tag earlier	タグを前へ移動
 	Move tag later	タグを後へ移動
+	Privacy Policy	プライバシーポリシー
+	Product links, source code and updates from MIXEL.	MIXEL の製品リンク、ソースコード、更新情報。

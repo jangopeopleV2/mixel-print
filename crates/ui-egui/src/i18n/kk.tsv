@@ -67,7 +67,6 @@
 	Side panels	Бүйірлік панельдер
 	Enable Acrobat JavaScript	Acrobat JavaScript-ті қосу
 	OK	ОК
-	Join our Discord	Discord-қа қосылыңыз
 	Close	Жабу
 	Next / previous match	Келесі / алдыңғы сәйкестік
 	Copy selected text	Таңдалған мәтінді көшіру
@@ -122,8 +121,7 @@
 	Current page — type a page number or label (such as iv) and press Enter	Ағымдағы бет — бет нөмірін немесе белгісін (мысалы, iv) теріңіз де, Enter пернесін басыңыз
 	Welcome to MIXEL Print	MIXEL Print-ге қош келдіңіз
 	An open-source PDF workbench — local, private, and scriptable.	Ашық бастапқы кодты PDF жұмыс орны — жергілікті, жеке әрі скрипттерді қолдайтын.
-	Join the ArtCraft community	ArtCraft қауымдастығына қосылыңыз
-	Get help, share feedback and follow development on Discord.	Көмек алыңыз, пікір бөлісіңіз және Discord-тағы әзірлеуді қадағалаңыз.
+	MIXEL Creative Apps	MIXEL шығармашылық қолданбалары
 	Recommended tools	Ұсынылған құралдар
 	Use now	Дәл қазір пайдалану
 	Open file	Файлды ашу
@@ -267,10 +265,9 @@
 	Split document…	Құжатты бөлу…
 	Number pages…	Беттерді нөмірлеу…
 	Keyboard shortcuts	Пернетақта тіркесімдері
-	Join the ArtCraft Discord	ArtCraft Discord-ына қосылыңыз
 	MIXEL Print web page	MIXEL Print веб-сайты
 	MIXEL Print on GitHub	GitHub-тағы MIXEL Print
-	ArtCraft website	ArtCraft веб-сайты
+	MIXEL Website	MIXEL веб-сайты
 	Check for updates…	Жаңартуларды тексеру…
 	About MIXEL Print	MIXEL Print туралы
 	Export a PDF	PDF экспорттау
@@ -2338,3 +2335,5 @@ animation effects	Off	Өшірулі
 	Local cross-PDF links require the desktop app	PDF файлдары арасындағы жергілікті сілтемелер үшін жұмыс үстелі қолданбасы қажет
 	Move tag earlier	Тегті ертерек жылжыту
 	Move tag later	Тегті кейінірек жылжыту
+	Privacy Policy	Құпиялық саясаты
+	Product links, source code and updates from MIXEL.	MIXEL өнімдеріне сілтемелер, бастапқы код және жаңартулар.
