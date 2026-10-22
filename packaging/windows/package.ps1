@@ -87,6 +87,24 @@ $Stage = Join-Path $TargetDir "windows-package\$Arch"
 Remove-Item -Recurse -Force $Stage -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $Stage | Out-Null
 Copy-Item (Join-Path $Bin 'pdfcraft.exe'), (Join-Path $Bin 'pdfcraft-cli.exe') $Stage
+
+# Full notices for the frozen epaint_default_fonts 0.36.2 lock and application attribution.
+$LegalStage = Join-Path $Stage 'Licenses'
+$LegalFiles = @(
+  @{ Source = 'NOTICE'; Destination = 'NOTICE' },
+  @{ Source = 'ATTRIBUTION.md'; Destination = 'ATTRIBUTION.md' },
+  @{ Source = 'packaging\licenses\epaint_default_fonts-0.36.2\Hack-Regular.txt'; Destination = 'epaint_default_fonts-0.36.2\Hack-Regular.txt' },
+  @{ Source = 'packaging\licenses\epaint_default_fonts-0.36.2\OFL.txt'; Destination = 'epaint_default_fonts-0.36.2\OFL.txt' },
+  @{ Source = 'packaging\licenses\epaint_default_fonts-0.36.2\UFL.txt'; Destination = 'epaint_default_fonts-0.36.2\UFL.txt' },
+  @{ Source = 'packaging\licenses\epaint_default_fonts-0.36.2\emoji-icon-font-mit-license.txt'; Destination = 'epaint_default_fonts-0.36.2\emoji-icon-font-mit-license.txt' }
+)
+foreach ($legalNotice in $LegalFiles) {
+  $legalSource = Join-Path $Root $legalNotice.Source
+  if (-not (Test-Path -LiteralPath $legalSource -PathType Leaf)) { throw "Missing legal notice: $legalSource" }
+  $legalDestination = Join-Path $LegalStage $legalNotice.Destination
+  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $legalDestination) -ErrorAction Stop | Out-Null
+  Copy-Item -LiteralPath $legalSource -Destination $legalDestination -ErrorAction Stop
+}
 # The document icon embeds Lucide artwork: carry its ISC notice and the project licences
 # beside the binaries in both distributions.
 foreach ($f in 'LICENSE-MIT', 'LICENSE-APACHE', 'NOTICE') {
@@ -128,6 +146,7 @@ $Portable = Join-Path $TargetDir "windows-package\pdfcraft-$Version-windows-$Arc
 Remove-Item -Recurse -Force $Portable -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $Portable | Out-Null
 Copy-Item (Join-Path $Stage '*.exe') $Portable
+Copy-Item -LiteralPath $LegalStage -Destination (Join-Path $Portable 'Licenses') -Recurse -ErrorAction Stop
 foreach ($f in 'NOTICE', 'LICENSE-document.txt') {
   Copy-Item (Join-Path $Stage $f) $Portable
 }
