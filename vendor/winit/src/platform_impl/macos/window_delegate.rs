@@ -1,3 +1,4 @@
+// MIXEL modified 2026-10-24: remove private macOS window-server blur APIs.
 #![allow(clippy::unnecessary_cast)]
 use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
@@ -887,18 +888,10 @@ impl WindowDelegate {
         self.window().setBackgroundColor(Some(&color));
     }
 
-    pub fn set_blur(&self, blur: bool) {
-        // NOTE: in general we want to specify the blur radius, but the choice of 80
-        // should be a reasonable default.
-        let radius = if blur { 80 } else { 0 };
-        let window_number = unsafe { self.window().windowNumber() };
-        unsafe {
-            ffi::CGSSetWindowBackgroundBlurRadius(
-                ffi::CGSMainConnectionID(),
-                window_number,
-                radius,
-            );
-        }
+    pub fn set_blur(&self, _blur: bool) {
+        // Background blur is an optional visual effect. Intentionally leave it
+        // unsupported on macOS to avoid private window-server APIs. Normal
+        // window rendering does not depend on this effect.
     }
 
     pub fn set_visible(&self, visible: bool) {
